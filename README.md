@@ -116,7 +116,7 @@
   'Click <a href="http://www.python.org">here</a>.\n'
   )
   ```
-- Use `format()` method and `%` operator as alternatives to f-strings.
+- **Alternatives to f-strings** - `format()` method and `%` operator:
   ```py
   print(f'{year:>3d} {principal:0.2f}')
 
@@ -128,7 +128,7 @@
   a = 'Hello World'
   c = a[-1]    # c = 'd'
   ```
-- Use slicing operator `s[i:j]` to extract a substring.
+- Use slicing operator `s[i:j]` to extract a **substring**.
   ```py
   a = 'Hello World'
   c = a[:5]    # c = 'Hello'
@@ -138,13 +138,13 @@
   ```
 - Common String Methods:
   ![common-string-methods](images/common-string-methods.png)
-- Convert string to int or float:
+- Convert string **to int or float**:
   ```py
   x = '37'
   y = '42.79'
   z = int(x) + float(y) # z = 79.78999999999999 (float arithmetic issue)
   ```
-- Convert non-string to string:
+- Convert non-string **to string**:
   ```py
   s = "hello\nworld"
 
@@ -159,4 +159,4 @@
   print(format(12.34567, "0.2f"))
   print(f'{12.34567:0.2f}')
   ```
-- Use `repr(s)` when **debugging** because it shows you more information.
+- When **debugging**, use `repr(s)` because it shows you more information.

@@ -70,8 +70,8 @@
   `pow(x, y [, modulo])` | Return `(x ** y) % modulo`
   `round(x, [n])` | Implement "**banker's rounding**".
 - Logical Operators:
-  Operator |
-  ----------
+  Operator | 
+  ---------|
   `x or y` |
   `x and y` |
   `not x` |

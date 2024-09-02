@@ -69,12 +69,7 @@
   `divmod(x, y)` | Return `(x // y, x % y)` (A tuple)
   `pow(x, y [, modulo])` | Return `(x ** y) % modulo`
   `round(x, [n])` | Implement "**banker's rounding**".
-- Logical Operators:
-  Operator | 
-  ---------|
-  `x or y` |
-  `x and y` |
-  `not x` |
+- **Logical Operators:** `x or y`, `x and y`, `not x`
 - Python does not have `++` or `--` operators.
 
 ## 1.5 Conditionals and Control Flow
@@ -92,7 +87,8 @@
   ```
 - Assignment expression (walrus operator `:=`):
   ```py
-  # Use := to combine the assignment of a variable and a conditional.
+  # Use := to assign to a variable and return its value.
+  # Example: Combine the assignment of a variable and a conditional.
   x = 0
   while (x := x + 1) < 10: # Print 1, 2, 3, ..., 9
       print(x)
@@ -160,3 +156,89 @@
   print(f'{12.34567:0.2f}')
   ```
 - When **debugging**, use `repr(s)` because it shows you more information.
+
+## 1.7 File Input and Output
+
+- `with` statement:
+  ```py
+  # Once control leaves the with statement block, the file is automatically closed.
+  with open("data.txt") as file:
+      for line in file:
+          print(line, end='')
+  ```
+- Common file operations:
+  ```py
+  # To read the entire file as a string.
+  with open('data.txt') as file:
+      data = file.read() # <-
+
+  # To read in chunks (e.g. 10,000 bytes per chunk)
+  with open('data.txt') as file:
+      while (chunk := file.read(10000)): # <-
+          print(chunk, end='')
+  
+  # Print/write to file.
+  with open('out.txt', 'wt') as out:
+      while year <= num_years:
+          principal = principal * (1 + rate)
+          print(f'{year:>3d} {principal:0.2f}', file=out) # <-
+          out.write(f'{year:3d} {principal:0.2f}\n') # <-
+          year += 1
+  ```
+
+## 1.8 Lists
+
+- Can contain mix of objects:
+  ```py
+  mix_objects = [1, "Dave", 3.14, ["Mark", 7, 9, [100, 101]], 10]
+  ```
+- Common list operations:
+  ```py
+  names = ["Dave", "Paula", "Thomas", "Lewis"]
+  # Replace the first two items with ["Dave", "Mark", "Jeff"]
+  names[0:2] = ["Dave", "Mark", "Jeff"]
+
+  # List comprehension (preferred)
+  values = [int(row[1]) * float(row[2]) for row in rows]
+
+  # Without list comprehension
+  values = []
+  for row in rows:
+      values.append(int(row[1]) * float(row[2]))
+  total = sum(values)
+  ```
+
+## 1.9 Tuples
+
+- Pack a collection of values into an **immutable object**.
+- Support most of the same operations as lists.
+- Best viewed as a single immutable object that consists of several parts, not as a collection of distinct objects like a list.
+- The variable `_` can be used to indicate a discarded value:
+  ```py
+  total = sum([shares * price for _, shares, price in portfolio])
+  ```
+
+## 1.10 Sets
+
+- Elements are **restricted to immutable objects**. E.g. you can't make a set containing lists.
+- **Unordered** (the order of items can't be predicted) and cannot be indexed by numbers.
+- Set comprehension:
+  ```py
+  names = {s[0] for s in portfolio}
+  ```
+- Set operations:
+  ```py
+  t = {"IBM", "MSFT", "HPE", "IBM", "CAT"}
+  s = {"IBM", "MSFT", "AA"}
+  
+  a = t | s # Union {'MSFT', 'CAT', 'HPE', 'AA', 'IBM'}
+  b = t & s # Intersection {'IBM', 'MSFT'}
+  c = t - s # Difference { 'CAT', 'HPE' }
+  d = s - t # Difference { 'AA' }
+  e = t ^ s # XOR { 'CAT', 'HPE', 'AA' }
+  
+  s.update({"JJ", "GE", "ACME"}) # Adds multiple items
+
+  t.remove("IBM")   # Raise KeyError if absent
+  t.discard("SCOX") # Remove if exists
+  ```

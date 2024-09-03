@@ -231,16 +231,16 @@
   t = {"IBM", "MSFT", "HPE", "IBM", "CAT"}
   s = {"IBM", "MSFT", "AA"}
   
-  a = t | s # Union {'MSFT', 'CAT', 'HPE', 'AA', 'IBM'}
-  b = t & s # Intersection {'IBM', 'MSFT'}
-  c = t - s # Difference { 'CAT', 'HPE' }
-  d = s - t # Difference { 'AA' }
-  e = t ^ s # XOR { 'CAT', 'HPE', 'AA' }
+  a = t | s  # Union {'MSFT', 'CAT', 'HPE', 'AA', 'IBM'}
+  b = t & s  # Intersection {'IBM', 'MSFT'}
+  c = t - s  # Difference { 'CAT', 'HPE' }
+  d = s - t  # Difference { 'AA' }
+  e = t ^ s  # XOR { 'CAT', 'HPE', 'AA' }
   
-  s.update({"JJ", "GE", "ACME"}) # Adds multiple items
+  s.update({"JJ", "GE", "ACME"})  # Adds multiple items
 
-  t.remove("IBM")   # Raise KeyError if absent
-  t.discard("SCOX") # Remove if exists
+  t.remove("IBM")    # Raise KeyError if absent
+  t.discard("SCOX")  # Remove if exists
   ```
 
 ## 1.11 Dictionaries
@@ -297,7 +297,7 @@
       print(f"2 to the {n} power is {2**n}")
   
   # Descending sequence
-  for i in range(8, 1, -1):
+  for i in range(8, 1, -1):  # step = -1
       print(i)
   
   # To loop over a dictionary.
@@ -330,3 +330,42 @@
   connect("www.python.org", 80, timeout=500)
   ```
 - When variables are defined inside a function, their **scope is local** (more detail in **Chapter 5**).
+
+## 1.14 Exceptions
+
+- Catch and handle exceptions using `try` and `except` statement:
+  ```py
+  try:
+      price = float(price_str)
+  except ValueError as err:
+      print("Reason:", err)
+  ```
+- To throw an exception:
+  ```py
+  raise RuntimeError("Computer says no")
+  ```
+
+## 1.15 Program Termination
+
+- Example:
+  ```py
+  import atexit
+
+
+  def cleanup():
+      print("Cleaning up...")
+      print("Program terminated.")
+
+
+  atexit.register(cleanup)
+
+  print("Program started.")
+
+  raise SystemExit("Exit on error.")
+
+  # Output:
+  #   Program started.
+  #   Exit on error.
+  #   Cleaning up...
+  #   Program terminated.
+  ```

@@ -287,3 +287,46 @@
   ```
 - **Mutable data structures** such as lists, sets and dictionaries **can't be used as keys**.
 - In Python 3.6 or later, the dictionary preserves the input order.
+
+## 1.12 Iteration and Looping
+
+- Example:
+  ```py
+  # To loop over a range of integers.
+  for n in range(1, 10):  # stop = 10 (exclusive)
+      print(f"2 to the {n} power is {2**n}")
+  
+  # Descending sequence
+  for i in range(8, 1, -1):
+      print(i)
+  
+  # To loop over a dictionary.
+  prices = {"GOOG": 490.10, "IBM": 91.50, "AAPL": 123.15}
+  for key in prices:
+      print(key, "=", prices[key])
+  ```
+- `range()` object computes the values it represents **on demand** when lookups are requested.
+
+## 1.13 Functions
+
+- To include a **documentation string** as the first statement.
+  ```py
+  # Annotated with types.
+  def compute_remainder(dividend: int, divisor: int) -> int:
+      """
+      Computes the remainder.
+      """
+      quotient = dividend // divisor
+      result = dividend - quotient * divisor
+      return result
+  ```
+- Annotations are **merely informational** and are not enforced at runtime.
+- Parameter default value:
+  ```py
+  def connect(hostname, port, timeout=300):
+      print(f"{hostname}:{port}")
+
+  # Recommended to specify optional arguments using keyword arguments.
+  connect("www.python.org", 80, timeout=500)
+  ```
+- When variables are defined inside a function, their **scope is local** (more detail in **Chapter 5**).

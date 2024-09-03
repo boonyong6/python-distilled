@@ -1,5 +1,5 @@
 # File containing lines of the form "name,shares,price"
-filename = '1_9_portfolio_data.csv'
+filename = 'portfolio.csv'
 
 portfolio = []
 with open(filename) as file:

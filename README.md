@@ -242,3 +242,48 @@
   t.remove("IBM")   # Raise KeyError if absent
   t.discard("SCOX") # Remove if exists
   ```
+
+## 1.11 Dictionaries
+
+- Dictionary operations:
+  ```py
+  # Use case 1: Used as a mapping for performing fast lookups.
+  prices = {
+      "GOOG": 490.1,
+      "AAPL": 123.5,
+      "IBM": 91.5,
+      "MSFT": 52.13,
+  }
+
+  # Use case 2: To define an object that consists of named fields.
+  stock = {
+      "name": "GOOG",
+      "shares": 100,
+      "price": 490.10
+  }
+
+  # To test the presence of a key.
+  if "IBM" in prices:
+      ...
+  
+  # To remove an element.
+  del prices["GOOG"]
+
+  # Use tuple to construct composite key.
+  prices = {} # Alternative: prices = dict()
+  prices["IBM", "2015-02-04"] = 91.42
+
+  # Dictionary comprehension
+  total_shares = {s[0]: 0 for s in portfolio}
+
+  # To create from key-value values.
+  pairs = [("IBM", 125), ("ACME", 50), ("PHP", 40)]
+  d = dict(pairs)
+
+  # To get a list of keys/values/items (actively reflects changes).
+  price_keys = prices.keys()
+  price_values = prices.values()
+  price_items = prices.items() # List of tuples
+  ```
+- **Mutable data structures** such as lists, sets and dictionaries **can't be used as keys**.
+- In Python 3.6 or later, the dictionary preserves the input order.

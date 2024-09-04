@@ -369,3 +369,128 @@
   #   Cleaning up...
   #   Program terminated.
   ```
+
+## 1.16 Objects and Classes
+
+- **All values** are objects.
+- `dir()` lists the methods available on an object. Useful in the interactive mode.
+- `__<method>__()` - A special method that implements a operator. E.g. `__add__()` implement the `+` operator.
+- In the **class**, the **first argument** in each method always refers to the object itself (`self`).
+- **Internal attributes** are prefixed with underscore. E.g. `self._name`.
+- Python does not have any mechanism for hiding or protecting data.
+- A good idea to define `__repr__()` to facilitate **debugging**.
+- **Inheritance** example:
+  ```py
+  class NumericStack(Stack):
+      # New method
+      def swap(self):
+          a = self.pop()
+          b = self.pop()
+          self.push(a)
+          self.push(b)
+
+      # To change the behavior of an existing method.
+      def push(self, item):
+          if not isinstance(item, (int, float)):
+              raise TypeError("Expected an int or float")
+          super().push(item)  # <-
+  ```
+- Often, inheritance is not the best solution.
+- **Composition** example:
+  ```py
+  class Calculator:
+      def __init__(self):
+          self._stack = Stack()  # <-
+
+      def push(self, item):
+          self._stack.push(item)
+
+      def pop(self):
+          return self._stack.pop()
+
+      def add(self):
+          self.push(self.pop() + self.pop())
+  ```
+
+## 1.17 Modules
+
+- The module name is the same as the **file name**.
+- `import` statement creates a new **namespace**.
+- If the import statement fails (`ImportError`), check a few things:
+  - Make sure the target `.py` file exists.
+  - Check the directories in `sys.path`.
+- `dir()` lists the contents of a module. Useful in the interactive mode.
+- Package manager - https://pypi.org
+- Example:
+  ```py
+  # To import a module.
+  import readport
+
+  # To import a module under a different name.
+  import readport as rp
+
+  # To import specific definitions.
+  from readport import read_portfolio
+  ```
+
+## 1.18 Script Writing
+
+- Any file can execute either as a **script** or as a **module**.
+- Example:
+  ```py
+  # File: readport.py
+
+  # If this file is run as the main script,
+  #   the __name__ variable is set to "__main__".
+  # else, 
+  #   the __name__ variable is set to "readport".
+  if __name__ == "__main__":
+      import sys
+
+      main(sys.argv)
+  ```
+
+## 1.19 Packages
+
+- A package is a **collection of modules**.
+- `__init__.py` is used to mark a directory as a package.
+- To import a module within the same package:
+  ```py
+  # pcost.py
+
+  # Consider the following directory structure:
+  #   tutorial/
+  #     __init__.py
+  #     readport.py
+  #     pcost.py
+
+  # Fully qualified import
+  from tutorial import readport
+
+  # Package-relative import
+  from . import readport
+  ```
+
+## 1.20 Structuring an Application
+
+- The **primary purpose** of the package is to manage `import` statements and the namespaces of modules.
+- Example:
+  ```
+  tutorial-project/
+      tutorial/
+          __init__.py
+          readport.py
+          pcost.py
+          stack.py
+          ...
+      tests/
+          test_stack.py
+          test_pcost.py
+          ...
+      examples/
+          sample.py
+          ...
+      doc/
+          tutorial.txt
+          ...
+  ```

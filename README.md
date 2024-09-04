@@ -494,3 +494,19 @@
           tutorial.txt
           ...
   ```
+
+## 1.21 Managing Third-Party Packages
+
+- To install a package:
+  ```bash
+  pip install <package>
+  ```
+- Installed packages are stored in the `site-packages` directory.
+- Inspect the `__file__` attribute of a package to find the path.
+- Use a **virtual environment** to install packages for a specific project:
+  ```
+  python -m venv <venv_name>
+
+  # To activate on Windows.
+  <venv_name>\Scripts\activate
+  ```

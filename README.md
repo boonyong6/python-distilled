@@ -4,6 +4,7 @@
 
 - Programs are executed by an **interpreter**.
 - To pick a version, if both Python 2 and Python 3 are installed:
+
   ```bash
   # In bash
   # Start version 2
@@ -12,6 +13,7 @@
   # Start version 3
   python3
   ```
+
 - In **interactive mode**, variable `_` holds the result of the last operation.
 
 ## 1.2 Python Programs
@@ -25,7 +27,8 @@
 ## 1.3 Primitives, Variables, and Expressions
 
 - Basics:
-  ``` py
+
+  ```py
   # Primitive types
   # ---------------
   42          # int
@@ -52,6 +55,7 @@
   0
   ''    # empty
   ```
+
 - Common to use **four spaces** per indentation level.
 
 ## 1.4 Arithmetic Operators
@@ -97,11 +101,12 @@
 ## 1.6 Text Strings
 
 - String literal:
+
   ```py
   a = 'Single/double-quoted strings must be specified on one line.'
 
-  b = '''Triple-quoted strings 
-  can be specified on 
+  b = '''Triple-quoted strings
+  can be specified on
   multiple lines.'''
 
   # Immediately adjacent string literals are concatenated into a single string.
@@ -112,13 +117,16 @@
   'Click <a href="http://www.python.org">here</a>.\n'
   )
   ```
+
 - **Alternatives to f-strings** - `format()` method and `%` operator:
+
   ```py
   print(f'{year:>3d} {principal:0.2f}')
 
   print('{0:>3d} {1:0.2f}'.format(year, principal))
   print('%3d %0.2f' % (year, principal))
   ```
+
 - **Negative indices** index from the end of the string.
   ```py
   a = 'Hello World'
@@ -133,7 +141,7 @@
   f = a[-5:]   # f = 'World'
   ```
 - Common String Methods:
-  ![common-string-methods](images/common-string-methods.png)
+  ![common-string-methods](images/1-6-common-string-methods.png)
 - Convert string **to int or float**:
   ```py
   x = '37'
@@ -141,6 +149,7 @@
   z = int(x) + float(y) # z = 79.78999999999999 (float arithmetic issue)
   ```
 - Convert non-string **to string**:
+
   ```py
   s = "hello\nworld"
 
@@ -155,6 +164,7 @@
   print(format(12.34567, "0.2f"))
   print(f'{12.34567:0.2f}')
   ```
+
 - When **debugging**, use `repr(s)` because it shows you more information.
 
 ## 1.7 File Input and Output
@@ -167,6 +177,7 @@
           print(line, end='')
   ```
 - Common file operations:
+
   ```py
   # To read the entire file as a string.
   with open('data.txt') as file:
@@ -176,7 +187,7 @@
   with open('data.txt') as file:
       while (chunk := file.read(10000)): # <-
           print(chunk, end='')
-  
+
   # Print/write to file.
   with open('out.txt', 'wt') as out:
       while year <= num_years:
@@ -193,6 +204,7 @@
   mix_objects = [1, "Dave", 3.14, ["Mark", 7, 9, [100, 101]], 10]
   ```
 - Common list operations:
+
   ```py
   names = ["Dave", "Paula", "Thomas", "Lewis"]
   # Replace the first two items with ["Dave", "Mark", "Jeff"]
@@ -227,16 +239,17 @@
   names = {s[0] for s in portfolio}
   ```
 - Set operations:
+
   ```py
   t = {"IBM", "MSFT", "HPE", "IBM", "CAT"}
   s = {"IBM", "MSFT", "AA"}
-  
+
   a = t | s  # Union {'MSFT', 'CAT', 'HPE', 'AA', 'IBM'}
   b = t & s  # Intersection {'IBM', 'MSFT'}
   c = t - s  # Difference { 'CAT', 'HPE' }
   d = s - t  # Difference { 'AA' }
   e = t ^ s  # XOR { 'CAT', 'HPE', 'AA' }
-  
+
   s.update({"JJ", "GE", "ACME"})  # Adds multiple items
 
   t.remove("IBM")    # Raise KeyError if absent
@@ -246,6 +259,7 @@
 ## 1.11 Dictionaries
 
 - Dictionary operations:
+
   ```py
   # Use case 1: Used as a mapping for performing fast lookups.
   prices = {
@@ -265,7 +279,7 @@
   # To test the presence of a key.
   if "IBM" in prices:
       ...
-  
+
   # To remove an element.
   del prices["GOOG"]
 
@@ -285,26 +299,29 @@
   price_values = prices.values()
   price_items = prices.items() # List of tuples
   ```
+
 - **Mutable data structures** such as lists, sets and dictionaries **can't be used as keys**.
 - In Python 3.6 or later, the dictionary preserves the input order.
 
 ## 1.12 Iteration and Looping
 
 - Example:
+
   ```py
   # To loop over a range of integers.
   for n in range(1, 10):  # stop = 10 (exclusive)
       print(f"2 to the {n} power is {2**n}")
-  
+
   # Descending sequence
   for i in range(8, 1, -1):  # step = -1
       print(i)
-  
+
   # To loop over a dictionary.
   prices = {"GOOG": 490.10, "IBM": 91.50, "AAPL": 123.15}
   for key in prices:
       print(key, "=", prices[key])
   ```
+
 - `range()` object computes the values it represents **on demand** when lookups are requested.
 
 ## 1.13 Functions
@@ -322,6 +339,7 @@
   ```
 - Annotations are **merely informational** and are not enforced at runtime.
 - Parameter default value:
+
   ```py
   def connect(hostname, port, timeout=300):
       print(f"{hostname}:{port}")
@@ -329,6 +347,7 @@
   # Recommended to specify optional arguments using keyword arguments.
   connect("www.python.org", 80, timeout=500)
   ```
+
 - When variables are defined inside a function, their **scope is local** (more detail in **Chapter 5**).
 
 ## 1.14 Exceptions
@@ -348,6 +367,7 @@
 ## 1.15 Program Termination
 
 - Example:
+
   ```py
   import atexit
 
@@ -380,6 +400,7 @@
 - Python does not have any mechanism for hiding or protecting data.
 - A good idea to define `__repr__()` to facilitate **debugging**.
 - **Inheritance** example:
+
   ```py
   class NumericStack(Stack):
       # New method
@@ -395,8 +416,10 @@
               raise TypeError("Expected an int or float")
           super().push(item)  # <-
   ```
+
 - Often, inheritance is not the best solution.
 - **Composition** example:
+
   ```py
   class Calculator:
       def __init__(self):
@@ -422,6 +445,7 @@
 - `dir()` lists the contents of a module. Useful in the interactive mode.
 - Package manager - https://pypi.org
 - Example:
+
   ```py
   # To import a module.
   import readport
@@ -437,12 +461,13 @@
 
 - Any file can execute either as a **script** or as a **module**.
 - Example:
+
   ```py
   # File: readport.py
 
   # If this file is run as the main script,
   #   the __name__ variable is set to "__main__".
-  # else, 
+  # else,
   #   the __name__ variable is set to "readport".
   if __name__ == "__main__":
       import sys
@@ -455,6 +480,7 @@
 - A package is a **collection of modules**.
 - `__init__.py` is used to mark a directory as a package.
 - To import a module within the same package:
+
   ```py
   # pcost.py
 
@@ -510,3 +536,83 @@
   # To activate on Windows.
   <venv_name>\Scripts\activate
   ```
+
+# 2 Operators, Expressions, and Data Manipulation
+
+## 2.1 Literals
+
+- Example:
+
+  ```py
+  # Integer
+  x = 42  # Decimal integer
+  bin(x)  # -> "0b101010"
+  oct(x)  # -> "0o52"
+  hex(x)  # -> "0x2a"
+
+  # Float (IEEE 754 double-precision (64-bit))
+  4.2
+  42.
+  .42
+  4.2e+2
+  ```
+
+## 2.3 Standard Operators
+
+- Example:
+
+  ```py
+  [1, 2, 3] + [4, 5]  # -> [1, 2, 3, 4, 5]
+  [1, 2, 3] * 3       # -> [1, 2, 3, 1, 2, 3, 1, 2, 3]
+  "%s has %d messages" % ("Dave", 37)
+
+  # Mixed data types
+  from factions import Fraction
+  a = Fraction(2, 3)
+  b = 5
+  a + b  # -> Fraction(17, 3)
+  ```
+
+## 2.4 In-Place Assignment
+
+- Example:
+
+  ```py
+  a = 3
+  a += 1
+
+  a = [1, 2, 3]
+  a += [4, 5]  # In-place update.
+  ```
+
+## 2.5 Object Comparison
+
+- An equality comparison between objects of incompatible types does not trigger an error but returns `False`.
+- Example:
+
+  ```py
+  file == 2.0  # -> False
+  2 == 2.0     # -> True
+
+  a = [1, 2, 3]
+  b = [1, 2, 3]
+  # Identity operator
+  a is b  # -> False
+  # Equality operator
+  a == b  # -> True
+  ```
+
+- Comparing objects with the `is` operator is almost never what you want, use `==` operator instead.
+
+## 2.6 Ordered Comparison Operators - `<`, `<=`, `>`, `>=`
+
+- For **sets**, `x < y` tests if `x` is **strict subset** of `y`.
+- For **subsequences**, `x < y` tests if `x` is a **subsequence** of `y`.
+- Dictionary does not support the ordered comparison operators.
+
+## 2.9 Operations Involving Iterables
+
+![2-5-operations-on-iterables](images/2-5-operations-on-iterables.png)
+- For **strings**, `in` operator checks if the substring is contained in the string.
+- `in` operator does not support wildcards or pattern matching.
+- If the ***-expansion** is used on one-time iteration objects (e.g. files), the subsequent iteration yields no result.

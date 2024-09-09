@@ -645,7 +645,7 @@
   print(s[first_five])  # -> "hello"
   ```
 
-# 2.14 List, Set, and Dictionary Comprehensions
+## 2.14 List, Set, and Dictionary Comprehensions
 
 - Useful for transforming a collection of data into another data structure.
 - Also possible to apply a **filter**:
@@ -669,3 +669,46 @@
   # Use := operator to avoid double evaluation.
   data3 = [v for x in values if (v := to_int(x)) is not None]
   ```
+
+## 2.15 Generator Expressions
+
+- Same computation as a list comprehension but produce the result iteratively.
+- Produce values on demand, which improve performance and memory use.
+- Example:
+  ```py
+  nums = [1, 2, 3, 4]
+  squares = (num * num for num in nums)
+
+  next(squares)  # 1
+  next(squares)  # 4
+
+  for square in squares:
+      print(square)  # 9, 16
+
+
+  # Convert to a list.
+  squares_list = list(squares)
+
+
+  # Pass as a single function argument.
+  sum((x * x for x in values))
+  sum(x * x for x in values)  # Parentheses are optional.
+  ```
+- Can only be used/iterated once.
+- Can't be indexed.
+
+## 2.18 Order of Evaluation
+
+![2-11-order-of-evaluation](images/2-11-order-of-evaluation.png)
+- A common confusion:
+  ```py
+  a = 10
+  result = a <= 10 and 1 < a  # -> True
+
+  # bitwise-and (&) has higher precedence than the comparison operators.
+  result = a <= 10 & 1 < a    # a <= (10 & 1) < a -> False
+  ```
+
+## 2.19 Final Words: The Secret Life of Data
+
+- Python is frequently used in applications involving **data manipulation and analysis**.

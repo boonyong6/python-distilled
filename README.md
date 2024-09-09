@@ -616,3 +616,56 @@
 - For **strings**, `in` operator checks if the substring is contained in the string.
 - `in` operator does not support wildcards or pattern matching.
 - If the ***-expansion** is used on one-time iteration objects (e.g. files), the subsequent iteration yields no result.
+
+## 2.10 Operations on Sequences
+
+![2-7-operations-on-sequences](images/2-7-operations-on-sequences.png)
+- `s * n` creates shallow copies (**reference**) of the list.
+- `s[-1]` returns the **last element**.
+- Slicing example:
+  ```py
+  a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+  a[2:5]      # [2, 3, 4]
+  a[:3]       # [0, 1, 2]
+  a[-3:]      # [7, 8, 9]
+  a[::2]      # [0, 2, 4, 6, 8 ]
+  a[::-2]     # [9, 7, 5, 3, 1 ]
+  a[0:5:2]    # [0, 2, 4]
+  a[5:0:-2]   # [5, 3, 1]
+  a[:5:1]     # [0, 1, 2, 3, 4]
+  a[:5:-1]    # [9, 8, 7, 6]
+  a[5::1]     # [5, 6, 7, 8, 9]
+  a[5::-1]    # [5, 4, 3, 2, 1, 0]
+  a[5:0:-1]   # [5, 4, 3, 2, 1]
+
+  # Named slice
+  first_five = slice(0, 5)
+  s = "hello world"
+  print(s[first_five])  # -> "hello"
+  ```
+
+# 2.14 List, Set, and Dictionary Comprehensions
+
+- Useful for transforming a collection of data into another data structure.
+- Also possible to apply a **filter**:
+  ```py
+  squares = [n * n for n in nums if n > 2]
+  ```
+- Variables used inside a comprehension are **private**.
+- **Set comprehension** will give you a set of **distinct values**.
+- When creating **sets** and **dictionaries**, later entries might **overwrite** earlier entires.
+- Within a comprehension, it's not possible to include any exception handling. Consider wrapping exceptions with a function:
+  ```py
+  def to_int(x):
+      try:
+          return int(x)
+      except ValueError:
+          return None
+
+  # Note: Double evaluation of to_int().
+  data2 = [to_int(x) for x in values if to_int(x) is not None]
+
+  # Use := operator to avoid double evaluation.
+  data3 = [v for x in values if (v := to_int(x)) is not None]
+  ```

@@ -181,19 +181,19 @@
   ```py
   # To read the entire file as a string.
   with open('data.txt') as file:
-      data = file.read() # <-
+      data = file.read() # <--
 
   # To read in chunks (e.g. 10,000 bytes per chunk)
   with open('data.txt') as file:
-      while (chunk := file.read(10000)): # <-
+      while (chunk := file.read(10000)): # <--
           print(chunk, end='')
 
   # Print/write to file.
   with open('out.txt', 'wt') as out:
       while year <= num_years:
           principal = principal * (1 + rate)
-          print(f'{year:>3d} {principal:0.2f}', file=out) # <-
-          out.write(f'{year:3d} {principal:0.2f}\n') # <-
+          print(f'{year:>3d} {principal:0.2f}', file=out) # <--
+          out.write(f'{year:3d} {principal:0.2f}\n') # <--
           year += 1
   ```
 
@@ -239,7 +239,6 @@
   names = {s[0] for s in portfolio}
   ```
 - Set operations:
-
   ```py
   t = {"IBM", "MSFT", "HPE", "IBM", "CAT"}
   s = {"IBM", "MSFT", "AA"}
@@ -530,6 +529,7 @@
 - Installed packages are stored in the `site-packages` directory.
 - Inspect the `__file__` attribute of a package to find the path.
 - Use a **virtual environment** to install packages for a specific project:
+
   ```
   python -m venv <venv_name>
 
@@ -613,16 +613,19 @@
 ## 2.9 Operations Involving Iterables
 
 ![2-5-operations-on-iterables](images/2-5-operations-on-iterables.png)
+
 - For **strings**, `in` operator checks if the substring is contained in the string.
 - `in` operator does not support wildcards or pattern matching.
-- If the ***-expansion** is used on one-time iteration objects (e.g. files), the subsequent iteration yields no result.
+- If the **\*-expansion** is used on one-time iteration objects (e.g. files), the subsequent iteration yields no result.
 
 ## 2.10 Operations on Sequences
 
 ![2-7-operations-on-sequences](images/2-7-operations-on-sequences.png)
+
 - `s * n` creates shallow copies (**reference**) of the list.
 - `s[-1]` returns the **last element**.
 - Slicing example:
+
   ```py
   a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -656,6 +659,7 @@
 - **Set comprehension** will give you a set of **distinct values**.
 - When creating **sets** and **dictionaries**, later entries might **overwrite** earlier entires.
 - Within a comprehension, it's not possible to include any exception handling. Consider wrapping exceptions with a function:
+
   ```py
   def to_int(x):
       try:
@@ -675,6 +679,7 @@
 - Same computation as a list comprehension but produce the result iteratively.
 - Produce values on demand, which improve performance and memory use.
 - Example:
+
   ```py
   nums = [1, 2, 3, 4]
   squares = (num * num for num in nums)
@@ -694,13 +699,16 @@
   sum((x * x for x in values))
   sum(x * x for x in values)  # Parentheses are optional.
   ```
+
 - Can only be used/iterated once.
 - Can't be indexed.
 
 ## 2.18 Order of Evaluation
 
 ![2-11-order-of-evaluation](images/2-11-order-of-evaluation.png)
+
 - A common confusion:
+
   ```py
   a = 10
   result = a <= 10 and 1 < a  # -> True
@@ -712,3 +720,137 @@
 ## 2.19 Final Words: The Secret Life of Data
 
 - Python is frequently used in applications involving **data manipulation and analysis**.
+
+# 3 Program Structure and Control Flow
+
+## 3.1 Program Structure and Execution
+
+- Structured as a sequence of statements.
+- The interpreter executes statements in the order they appear.
+
+## 3.3 Loops and Iteration
+
+- `for` statement works with any object that implements the iterator protocol.
+- The scope of the iteration variable is not private to the `for` statement.
+- Use `enumerate()` to keep track of a numerical index:
+  ```py
+  # _ is a throw-away variable.
+  # start=1 is an optional argument to specify a start index.
+  for i, (x, _, *extra) in enumerate(s, start=1):
+      print("i:", i, "x:", x, "extra:", extra)
+  ```
+- Common looping problem - **iterating in parallel** over two or more iterables:
+
+  ```py
+  seq1 = [0, 1, 2, 3, 4, 5, 6]
+  seq2 = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+  # Use zip() to combine iterables into an iterator of tuples.
+  # Stop when the shortest iterable is exhausted.
+  # zip() returns an iterator that produces the results when iterated.
+  for seq1_item, seq2_item in zip(seq1, seq2):
+      print("seq1_item:", seq1_item, "|", "seq2_item:", seq2_item)
+  ```
+
+- Python doesn't provide a "goto" statement.
+- Can attach the `else` statement to loop constructs (for-else):
+  ```py
+  # Use case: In code that iterates over data but needs to set or check some kind of flag or condition.
+  with open("foo.txt") as file:
+      for i, line in enumerate(file):
+          stripped = line.strip()
+          if not stripped:  # If the line is empty.
+              break  # Skip the else clause. (Loop is exited early.)
+          print(f"=> Line {i + 1}: {stripped}")
+      else:  # Execute only if the loop runs to completion.
+          raise RuntimeError("No empty lines found.")  # Assuming an empty line is expected.
+  ```
+
+## 3.4 Exceptions
+
+- Standard attributes (`e` is an exception object):
+  Attribute | Description
+  ----------|------------
+  `e.args` | Tuple. In most cases, this is a one-item tuple.
+  `e.__cause__` | Previous exception if the exception (**expected**) was raised and chained while handling another exception.<br />E.g. `raise ValueError("Bad input") from e`
+  `e.__context__` | Previous exception if the exception (**unexpected**) was raised while handling another exception. (Programming mistake)
+  `e.__traceback__` | Stack trace object.
+- `e` is only accessible inside the associated except block.
+- Use `Exception` type to catch all exceptions except those related to program exit (e.g. `SystemExit`):
+  ```py
+  try:
+      nan = int("NaN")
+  except Exception as e:
+      # Use !r to convert to string with __repr__.
+      print(f"An error occurred: {e!r}")
+  ```
+- `try` statement supports an `else` clause (try-except-else):
+  ```py
+  try:
+      file = open("bar.txt", "rt")
+  except FileNotFoundError as e:
+      print(f"Unable to open bar: {e}")
+      data = ""
+  else:  # executed if the try block doesn't raise an exception.
+      data = file.read()
+      file.close()
+  ```
+
+### 3.4.1 The Exception Hierarchy
+
+- Exceptions are organized into a **hierarchy via inheritance**. Instead of targeting specific errors (e.g. `IndexError`, `KeyError`), you can focus on more general **categories of errors** (e.g. `LookupError`).
+  ![3-1-exception-categories](images/3-1-exception-categories.png)
+- `BaseException` class is **rarely used** because it matches all possible exceptions. This includes **exceptions used for control flow**.
+- `ValueError` exception is commonly raised when a **bad input** value is given to an operation.
+- Other built-in exceptions that inherit from `Exception` (aren't part of any exception group):
+  ![3-2-other-built-in-exceptions](images/3-2-other-built-in-exceptions.png)
+
+### 3.4.2 Exceptions and Control Flow
+
+- Normally, exceptions are for handling errors. But, a few exceptions are used for control flow.
+  ![3-3-exceptions-used-for-control-flow](images/3-3-exceptions-used-for-control-flow.png)
+- `signal` library module can be used to control the delivery of SIGINT (`KeyboardInterrupt`).
+
+### 3.4.5 Exception Tracebacks
+
+- Use `traceback` module to produce the traceback message:
+  ```py
+  import traceback
+  
+  # To get a list of traceback messages.
+  tb_lines = traceback.format_exception(type(e), e, e.__traceback__)
+  ```
+
+## 3.5 Context Managers and the `with` Statement
+
+- `with` statement allows statements to execute inside a **context** that is controlled by a **context manager** (the value returned by `__enter__()`).
+- When the `with <obj>` statement executes, `<obj>.__enter__()` is called to signal that a new context is being entered.
+- When the `with <obj>` statement ends, `<obj>.__exit__(type, value, traceback)` is called. 
+  - If **no exception** is raised, all three arguments are set to `None`. 
+  - Return `True` to indicate that the raised exception was handled and will not propagate.
+  - Return `None` or `False` to **propagate** the exception.
+- `with <obj> as <var>` - The value returned by `<obj>.__enter__()` is placed into `<var>`.
+- `contextlib` standard library module contains utilities for context managers.
+
+## 3.6 Assertions and `__debug__` - `assert`
+
+- Introduce **debugging code**.
+- Example:
+  ```py
+  # test is an expression that evaluate to True or False.
+  # Raise an "AssertionError" exception if test evaluates to False.
+  assert test [, msg]
+  ```
+- Won't be executed if Python is run in **optimized mode**.
+- Primarily used to check invariants that should always be true. Else, it indicates a bug.
+  ```py
+  # Assuming n is always valid.
+  def factorial(n):
+      assert n > 0, "must supply a positive value"
+      result = 1
+      while n > 1:
+          result *= n
+          n -= 1
+      return result
+  ```
+- Serve as a kind of "**smoke test**" (crash with a failed assertion upon import).

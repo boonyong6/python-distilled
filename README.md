@@ -422,7 +422,7 @@
   ```py
   class Calculator:
       def __init__(self):
-          self._stack = Stack()  # <-
+          self._stack = Stack()  # <--
 
       def push(self, item):
           self._stack.push(item)
@@ -854,3 +854,128 @@
       return result
   ```
 - Serve as a kind of "**smoke test**" (crash with a failed assertion upon import).
+
+# 4 Objects, Types, and Protocols
+
+## 4.1 Essential Concepts
+
+- Operators are ultimately mapped to methods. E.g. `a + 10` executes `a.__add__(10)`.
+
+## 4.2 Object Identity and Type
+
+- `id()` returns the identity of an object.
+- `is` and `is not` operators compare the **identities** of two objects.
+- Different ways to compare two objects:
+  ```py
+  def compare(a, b):
+      if a is b:
+          print("Same object")
+      if a == b:
+          print("Same value")
+      if type(a) is type(b):
+          print("Same type")
+  ```
+- Preferred way to check a value against a type (inheritance):
+  ```py
+  if isinstance(a, (list, tuple)):  # Can check against many types.
+      max_val = max(a)
+  ```
+  - Often not as useful as you might imagine (due to inheritance).
+
+## 4.3 Reference Counting and Garbage Collection
+
+- Reference count examples:
+  ```py
+  # Increase the reference count.
+  a = 37
+  b = a        
+  c = []  # Except this.
+  c.append(b)
+  
+  # Decrease the reference count.
+  del a
+  b = 42
+  c[0] = 2
+
+  # To get the reference count.
+  import sys
+  sys.getrefcount(a)
+  ```
+- Reference count is often much higher. For immutable data (e.g. `int`, `str`), the interpreter shares objects between different parts of the program in order to converse memory.
+- An object is garbage collected when its reference count reaches zero.
+- In case of circular dependency, objects can't be garbage collected immediately in response to `del <obj>` statements. The destruction of the objects will be **delayed** until a **cycle detector** executes (run periodically).
+- Use `gc.collect()` to immediately invoke the cyclic garbage collector.
+- One of the use cases for manually deleting objects:
+  ```py
+  # Example: When working with gigantic data structures.
+  def some_calculation():
+      data = create_giant_data_structure()
+      # Use data for some part of a calculation...
+
+      # Release the data - Indicate that the data is no longer needed, and can be garbage collected at this point.
+      del data
+
+      # Calculation continues...
+  ```
+
+## 4.4 References and Copies
+
+- Two types of copy:
+  ```py
+  a = [1, 2, [3, 4]]
+
+  # Shallow copy
+  b = list(a)           # <--
+
+  # Deep copy (actively discouraged)
+  import copy
+  b = copy.deepcopy(a)  # <--
+  b[2][0] = -100
+  print("b:", b)        # b: [1, 2, [-100, 4]]
+  print("a:", a)        # a: [1, 2, [3, 4]]
+  ```
+- Deep copy:
+  - Create a new object and **recursively copies** all the objects it contains.
+  - Use of `deepcopy()` is **discouraged**.
+  - Slow and often unnecessary.
+  - **Won't work** with objects that involve system or runtime state (e.g. open files, network connections, threads, generators)
+
+## 4.6 First-Class Objects
+
+- All values are objects.
+- All objects (**everything**) are first-class objects.
+- All objects that can be **assigned to a name** can be **treated as data** (can be stored as variables, passed as arguments, returned from functions, and compared against other objects).
+- Placing functions or classes in a dictionary is a **common technique** for eliminating complex `if-elif-else` statements:
+  ```py
+  # Write using if-elif-else statements.
+  if format == "text":
+      formatter = TextFormatter()
+  elif format == "csv":
+      formatter = CSVFormatter()
+  elif format == "html":
+      formatter = HTMLFormatter()
+  else:
+      raise RuntimeError("Bad format")
+  
+  # Rewrite using a dictionary.
+  _formats = {
+    "text": TextFormatter,
+    "csv": CSVFormatter,
+    "html": HTMLFormatter
+  }
+
+  if format in _formats:
+      formatter = _formats[format]()
+  else:
+      raise RuntimeError("Bad format")
+  ```
+## 4.7 Using `None` for Optional or Missing Data
+
+- Frequently used as the default value of optional arguments.
+- `None` is a **singleton**.
+- To test against `None`:
+  ```py
+  if value is None:
+      print('"value" data is missing.')
+  ```
+- **Not recommended** to test `None` using `==`, even though it also works.

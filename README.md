@@ -4,7 +4,6 @@
 
 - Programs are executed by an **interpreter**.
 - To pick a version, if both Python 2 and Python 3 are installed:
-
   ```bash
   # In bash
   # Start version 2
@@ -13,7 +12,6 @@
   # Start version 3
   python3
   ```
-
 - In **interactive mode**, variable `_` holds the result of the last operation.
 
 ## 1.2 Python Programs
@@ -27,7 +25,6 @@
 ## 1.3 Primitives, Variables, and Expressions
 
 - Basics:
-
   ```py
   # Primitive types
   # ---------------
@@ -55,7 +52,6 @@
   0
   ''    # empty
   ```
-
 - Common to use **four spaces** per indentation level.
 
 ## 1.4 Arithmetic Operators
@@ -101,7 +97,6 @@
 ## 1.6 Text Strings
 
 - String literal:
-
   ```py
   a = 'Single/double-quoted strings must be specified on one line.'
 
@@ -117,16 +112,13 @@
   'Click <a href="http://www.python.org">here</a>.\n'
   )
   ```
-
 - **Alternatives to f-strings** - `format()` method and `%` operator:
-
   ```py
   print(f'{year:>3d} {principal:0.2f}')
 
   print('{0:>3d} {1:0.2f}'.format(year, principal))
   print('%3d %0.2f' % (year, principal))
   ```
-
 - **Negative indices** index from the end of the string.
   ```py
   a = 'Hello World'
@@ -149,7 +141,6 @@
   z = int(x) + float(y) # z = 79.78999999999999 (float arithmetic issue)
   ```
 - Convert non-string **to string**:
-
   ```py
   s = "hello\nworld"
 
@@ -164,7 +155,6 @@
   print(format(12.34567, "0.2f"))
   print(f'{12.34567:0.2f}')
   ```
-
 - When **debugging**, use `repr(s)` because it shows you more information.
 
 ## 1.7 File Input and Output
@@ -177,7 +167,6 @@
           print(line, end='')
   ```
 - Common file operations:
-
   ```py
   # To read the entire file as a string.
   with open('data.txt') as file:
@@ -204,7 +193,6 @@
   mix_objects = [1, "Dave", 3.14, ["Mark", 7, 9, [100, 101]], 10]
   ```
 - Common list operations:
-
   ```py
   names = ["Dave", "Paula", "Thomas", "Lewis"]
   # Replace the first two items with ["Dave", "Mark", "Jeff"]
@@ -258,7 +246,6 @@
 ## 1.11 Dictionaries
 
 - Dictionary operations:
-
   ```py
   # Use case 1: Used as a mapping for performing fast lookups.
   prices = {
@@ -298,14 +285,12 @@
   price_values = prices.values()
   price_items = prices.items() # List of tuples
   ```
-
 - **Mutable data structures** such as lists, sets and dictionaries **can't be used as keys**.
 - In Python 3.6 or later, the dictionary preserves the input order.
 
 ## 1.12 Iteration and Looping
 
 - Example:
-
   ```py
   # To loop over a range of integers.
   for n in range(1, 10):  # stop = 10 (exclusive)
@@ -320,7 +305,6 @@
   for key in prices:
       print(key, "=", prices[key])
   ```
-
 - `range()` object computes the values it represents **on demand** when lookups are requested.
 
 ## 1.13 Functions
@@ -338,7 +322,6 @@
   ```
 - Annotations are **merely informational** and are not enforced at runtime.
 - Parameter default value:
-
   ```py
   def connect(hostname, port, timeout=300):
       print(f"{hostname}:{port}")
@@ -346,7 +329,6 @@
   # Recommended to specify optional arguments using keyword arguments.
   connect("www.python.org", 80, timeout=500)
   ```
-
 - When variables are defined inside a function, their **scope is local** (more detail in **Chapter 5**).
 
 ## 1.14 Exceptions
@@ -366,7 +348,6 @@
 ## 1.15 Program Termination
 
 - Example:
-
   ```py
   import atexit
 
@@ -399,7 +380,6 @@
 - Python does not have any mechanism for hiding or protecting data.
 - A good idea to define `__repr__()` to facilitate **debugging**.
 - **Inheritance** example:
-
   ```py
   class NumericStack(Stack):
       # New method
@@ -415,10 +395,8 @@
               raise TypeError("Expected an int or float")
           super().push(item)  # <-
   ```
-
 - Often, inheritance is not the best solution.
 - **Composition** example:
-
   ```py
   class Calculator:
       def __init__(self):
@@ -444,7 +422,6 @@
 - `dir()` lists the contents of a module. Useful in the interactive mode.
 - Package manager - https://pypi.org
 - Example:
-
   ```py
   # To import a module.
   import readport
@@ -460,7 +437,6 @@
 
 - Any file can execute either as a **script** or as a **module**.
 - Example:
-
   ```py
   # File: readport.py
 
@@ -479,7 +455,6 @@
 - A package is a **collection of modules**.
 - `__init__.py` is used to mark a directory as a package.
 - To import a module within the same package:
-
   ```py
   # pcost.py
 
@@ -529,7 +504,6 @@
 - Installed packages are stored in the `site-packages` directory.
 - Inspect the `__file__` attribute of a package to find the path.
 - Use a **virtual environment** to install packages for a specific project:
-
   ```
   python -m venv <venv_name>
 
@@ -589,7 +563,6 @@
 
 - An equality comparison between objects of incompatible types does not trigger an error but returns `False`.
 - Example:
-
   ```py
   file == 2.0  # -> False
   2 == 2.0     # -> True
@@ -601,7 +574,6 @@
   # Equality operator
   a == b  # -> True
   ```
-
 - Comparing objects with the `is` operator is almost never what you want, use `==` operator instead.
 
 ## 2.6 Ordered Comparison Operators - `<`, `<=`, `>`, `>=`
@@ -621,11 +593,9 @@
 ## 2.10 Operations on Sequences
 
 ![2-7-operations-on-sequences](images/2-7-operations-on-sequences.png)
-
 - `s * n` creates shallow copies (**reference**) of the list.
 - `s[-1]` returns the **last element**.
 - Slicing example:
-
   ```py
   a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -659,7 +629,6 @@
 - **Set comprehension** will give you a set of **distinct values**.
 - When creating **sets** and **dictionaries**, later entries might **overwrite** earlier entires.
 - Within a comprehension, it's not possible to include any exception handling. Consider wrapping exceptions with a function:
-
   ```py
   def to_int(x):
       try:
@@ -679,7 +648,6 @@
 - Same computation as a list comprehension but produce the result iteratively.
 - Produce values on demand, which improve performance and memory use.
 - Example:
-
   ```py
   nums = [1, 2, 3, 4]
   squares = (num * num for num in nums)
@@ -699,7 +667,6 @@
   sum((x * x for x in values))
   sum(x * x for x in values)  # Parentheses are optional.
   ```
-
 - Can only be used/iterated once.
 - Can't be indexed.
 
@@ -969,6 +936,7 @@
   else:
       raise RuntimeError("Bad format")
   ```
+
 ## 4.7 Using `None` for Optional or Missing Data
 
 - Frequently used as the default value of optional arguments.
@@ -979,3 +947,69 @@
       print('"value" data is missing.')
   ```
 - **Not recommended** to test `None` using `==`, even though it also works.
+
+## 4.8 Object Protocols and Data Abstraction
+
+- Python does not verify correct program behavior in advance.
+- The behavior of an object is determined by a dynamic process that involves the **dispatch of special methods** - `__<method>__()`.
+- E.g. `x * y` is mapped to `x.__mul__(y)` internally.
+- **Special methods** are associated with different **categories of core interpreter features** (aka **protocol**).
+
+## 4.9 Object Protocol
+
+![4-1-methods-for-object-management](images/4-1-methods-for-object-management.png)
+- `SomeClass(args)` is translated into:
+  ```py
+  x = SomeClass.__new__(SomeClass, args)
+  if isinstance(x, SomeClass):  # <-- [1]
+      x.__init__(args)
+  ```
+- `__init__()` is the most common method to be implemented.
+- Use of `__new__()` almost always indicates the presence of **advanced logic** related to instance creation. E.g. to bypass `__init__()`, to implement singleton or caching.
+- `__new__()` doesn't need to return an instance of the class in question. If not, the call to `__init__()` is **skipped**. \[1]
+- `__del__()` is invoked when an instance **is about to** be garbage-collected.
+  - **Note:** `del <obj>` **only decrements the reference count** and doesn't necessarily result in a call to `__del__()`.
+- `__repr__()` is called by `repr()`.
+- `__repr__()` **conventions**:
+  ```py
+  a = [2, 3, 4, 5]    
+
+  # Return an expression string that can be evaluated to re-create the object using eval().
+  s = repr(a)         
+  b = eval(s)     # <-- Turns `s` back into a list.
+
+  # Return a string of form <...message...>, if a expression string can't be re-created.
+  g = (x + 1 for x in a)
+  print(repr(g))  # <-- "<generator object <genexpr> at ...>"
+  ```
+
+## 4.10 Number Protocol
+
+![4-2-methods-for-mathematical-operations](images/4-2-methods-for-mathematical-operations.png)
+- How the interpreter evaluates `x + y`:
+  - **Normal case** - Invoke `x.__add__(y)`. If it fails by returning `NotImplemented`, invoke the method with reversed operand - `y.__radd__(x)`.
+  - **Special case** - If `y` is a subtype of `x`, invoke `y.__radd__(x)`.
+- If in-place operators, such as `__iadd__()`, `__isub__()`, are undefined, `a += b` is evaluated using `a = a + b`.
+- There're **no methods** to redefine logical operators (`and`, `or`, `not`).
+
+## 4.11 Comparison Protocol
+
+![4-3-methods-for-instance-comparison-and-hashing](images/4-3-methods-for-instance-comparison-and-hashing.png)
+- `is` operator can't be redefined.
+- `__bool__()` is executed when an object is tested as conditional expression:
+  ```py
+  if a:  # Execute a.__bool__()
+      pass
+  ```
+  - If `__bool_()` is undefined, `__len__()` is used.
+  - If both `__bool_()` and `__len__()` are undefined, an object is considered to be `True`.
+- The **default implementation** of `__eq__()` compares objects by identity using the `is` operator.
+- `__ne__()` can be used to implement special processing for `!=`, but is **usually not required** as long as `__eq__()` is defined.
+- How the interpreter evaluates `a < b` (Same rules for `<`,`>`, `<=`, `>=`):
+  - **Normal case** - Invoke `a.__lt__(b)`. If it fails by returning `NotImplemented`, invoke the method with reversed operand - `b.__gt__(a)`.
+  - **Special case** - If `b` is a subtype of `a`, invoke `b.__gt__(a)`.
+- `NotImplemented` object is **not the same** as the `NotImplementedError` exception.
+- To **sort** objects or use `min()` or `max()`, `__lt__()` must be minimally defined.
+- `@total_ordering` class decorator in the `functools` module can generate all comparison methods as long as you minimally implement `__eq__()` and one of the other comparisons.
+- **Sets** and **dictionary keys** rely on the object's `__hash__()` to work properly.
+- `__eq__()` should always be defined together with `__hash__()`. Since it's possible for two objects to have the same hash value, `__eq__()` is necessary to resolve collisions.

@@ -960,12 +960,12 @@
 - `SomeClass(args)` is translated into:
   ```py
   x = SomeClass.__new__(SomeClass, args)
-  if isinstance(x, SomeClass):  # <-- [1]
+  if isinstance(x, SomeClass):  # <-- Ref. 1
       x.__init__(args)
   ```
 - `__init__()` is the most common method to be implemented.
 - Use of `__new__()` almost always indicates the presence of **advanced logic** related to instance creation. E.g. to bypass `__init__()`, to implement singleton or caching.
-- `__new__()` doesn't need to return an instance of the class in question. If not, the call to `__init__()` is **skipped**. \[1]
+- *Ref. 1:* `__new__()` doesn't need to return an instance of the class in question. If not, the call to `__init__()` is **skipped**.
 - `__del__()` is invoked when an instance **is about to** be garbage-collected.
   - **Note:** `del <obj>` **only decrements the reference count** and doesn't necessarily result in a call to `__del__()`.
 - `__repr__()` is called by `repr()`.
@@ -1132,7 +1132,7 @@
 
 ## 4.18 Final Words: On Being Pythonic
 
-- Three **widespread use** protocols:
+- Three **commonly used** protocols:
   1. [Object Protocol](#49-object-protocol)
       - `__repr__()` makes the state of an object easy to observe, facilitating debugging using `print()` or a logging library.
   2. [Iteration Protocol](#414-iteration-protocol)

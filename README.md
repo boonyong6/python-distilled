@@ -329,7 +329,7 @@
   # Recommended to specify optional arguments using keyword arguments.
   connect("www.python.org", 80, timeout=500)
   ```
-- When variables are defined inside a function, their **scope is local** (more detail in **Chapter 5**).
+- When variables are defined inside a function, their **scope is local** (more details in **Chapter 5**).
 
 ## 1.14 Exceptions
 
@@ -697,7 +697,7 @@
 
 ## 3.3 Loops and Iteration
 
-- `for` statement works with any object that implements the iterator protocol.
+- `for` statement works with any object that implements the [**iterator protocol**](#414-iteration-protocol).
 - The scope of the iteration variable is not private to the `for` statement.
 - Use `enumerate()` to keep track of a numerical index:
   ```py
@@ -707,7 +707,6 @@
       print("i:", i, "x:", x, "extra:", extra)
   ```
 - Common looping problem - **iterating in parallel** over two or more iterables:
-
   ```py
   seq1 = [0, 1, 2, 3, 4, 5, 6]
   seq2 = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
@@ -718,7 +717,6 @@
   for seq1_item, seq2_item in zip(seq1, seq2):
       print("seq1_item:", seq1_item, "|", "seq2_item:", seq2_item)
   ```
-
 - Python doesn't provide a "goto" statement.
 - Can attach the `else` statement to loop constructs (for-else):
   ```py
@@ -788,16 +786,17 @@
   tb_lines = traceback.format_exception(type(e), e, e.__traceback__)
   ```
 
-## 3.5 Context Managers and the `with` Statement
+## *3.5 Context Managers and the `with` Statement
 
-- `with` statement allows statements to execute inside a **context** that is controlled by a **context manager** (the value returned by `__enter__()`).
+- `with <obj>` statement allows a sequence of statements to execute inside a **context** that is controlled by a **context manager** - the value returned by `__enter__()`.
 - When the `with <obj>` statement executes, `<obj>.__enter__()` is called to signal that a new context is being entered.
 - When the `with <obj>` statement ends, `<obj>.__exit__(type, value, traceback)` is called. 
   - If **no exception** is raised, all three arguments are set to `None`. 
   - Return `True` to indicate that the raised exception was handled and will not propagate.
   - Return `None` or `False` to **propagate** the exception.
-- `with <obj> as <var>` - The value returned by `<obj>.__enter__()` is placed into `<var>`.
+- `with <obj> [as <var>]` - The value returned by `<obj>.__enter__()` is placed into `<var>`.
 - `contextlib` standard library module contains utilities for context managers.
+- [4.17 Context manager protocol reference](#417-context-manager-protocol)
 
 ## 3.6 Assertions and `__debug__` - `assert`
 
@@ -891,10 +890,10 @@
   ```py
   a = [1, 2, [3, 4]]
 
-  # Shallow copy
+  # 1. Shallow copy
   b = list(a)           # <--
 
-  # Deep copy (actively discouraged)
+  # 2. Deep copy (Discouraged)
   import copy
   b = copy.deepcopy(a)  # <--
   b[2][0] = -100
@@ -955,7 +954,7 @@
 - E.g. `x * y` is mapped to `x.__mul__(y)` internally.
 - **Special methods** are associated with different **categories of core interpreter features** (aka **protocol**).
 
-## 4.9 Object Protocol
+## *4.9 Object Protocol
 
 ![4-1-methods-for-object-management](images/4-1-methods-for-object-management.png)
 - `SomeClass(args)` is translated into:
@@ -1013,3 +1012,129 @@
 - `@total_ordering` class decorator in the `functools` module can generate all comparison methods as long as you minimally implement `__eq__()` and one of the other comparisons.
 - **Sets** and **dictionary keys** rely on the object's `__hash__()` to work properly.
 - `__eq__()` should always be defined together with `__hash__()`. Since it's possible for two objects to have the same hash value, `__eq__()` is necessary to resolve collisions.
+
+## 4.12 Conversion Protocols
+
+![4-4-methods-for-conversions](images/4-4-methods-for-conversions.png)
+- `__format__()` examples:
+  ```py
+  # Call x.__format__("spec")
+  f"{x:spec}"
+  format(x, "spec")
+  "x is {0:spec}".format(x)
+  ```
+  - There's a standard set of conventions used for the built-in types.
+  - More details about **string formatting** in **Chapter 9**.
+- Python **never performs implicit type conversions** using conversion methods.
+- `__index__()`:
+  - Performs an **integer conversion** of an object when it's used in an operation that requires an integer value.
+  - E.g. if `items` is a list, `items[x]` executes `items[x.__index__()]` if `x` is not an integer.
+  - Used in base conversions such as `oct(x)` and `hex(x)`.
+
+## 4.13 Container Protocol
+
+![4-5-methods-for-containers](images/4-5-methods-for-containers.png)
+- Used by objects that want to implement containers (e.g. `list`, `dict`, `set`)
+- Example:
+  ```py
+  a = [1, 2, 3, 4, 5, 6]
+  len(a)                  # a.__len__()
+  x = a[2]                # a.__getitem__(2)
+  a[1] = 7                # a.__setitem__(1, 7)
+  del a[2]                # a.__delitem__(2)
+  5 in a                  # a.__contains__(5)
+
+
+  # Slicing operations
+  x = a[1:5]              # a.__getitem__(slice(1, 5, None))
+  a[1:3] = [10, 11, 12]   # a.__setitem__(slice(1, 3, None), [10, 11, 12])
+  del a[1:4]              # a.__delitem__(slice(1, 4, None))
+  ```
+- **Multidimensional slicing**:
+  - No part of Python or its standard library make use of it.
+  - Purely for third-party libraries such as `numpy`.
+  ```py
+  from numpy import matrix
+  
+  m = matrix([
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+      [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+  ])
+
+  a = m[0:3:2]
+  b = m[1:3, 5:9]
+  c = m[0:3:2, 5:9:3]
+  m[1:4, 6:7] = 666
+
+  # Use ... to denote trailing or leading dimensions
+  m[1:3, ...] = 888
+
+  # The value passed to methods is a tuple.
+  a = m[..., 5:7]  # a = m.__getitem__((Ellipsis, slice(5, 7, None)))
+  ```
+
+## *4.14 Iteration Protocol
+
+- `__iter__()`:
+  - Implemented by instances that support iteration. 
+  - Returns an **iterator**. 
+    - An iterator implements `__next__()` that returns the next object or raises `StopIteration` to signal the end of iteration.
+  - A **generator function** involving `yield` is common way to implement an iterator because it conform to the iteration protocol.
+    - `yield` pauses the execution and returns a value, while maintaining its state so it can be resumed later.
+    ```py
+    class FRange:
+        def __init__(self, start, stop, step):
+            self.start = start
+            self.stop = stop
+            self.step = step
+
+        def __iter__(self):
+            x = self.start
+            while x < self.stop:
+                # Return `x` and pause the function.
+                yield x  # <--
+                # Run the next time the function resumes.
+                x += self.step
+    ```
+- `__reversed__()`:
+  - An **optional** reversed iterator.
+  - Used by the built-in `reversed()`:
+    ```py
+    for x in reversed(s):
+        print(x)
+    
+    # Output:
+    #   3
+    #   2
+    #   1
+    ```
+
+## 4.15 Attribute Protocol
+
+![4-6-methods-for-attribute-access](images/4-6-methods-for-attribute-access.png)
+- `__getattr__()`:
+  - Invoked when the `__getattribute__()` can't locate the attribute.
+  - **Default behavior** is to raise an `AttributeError` exception.
+- User-defined classes can define **properties** and **descriptors** for more fine-grained control of attribute access. More details in **Chapter 7**.
+
+## 4.16 Function Protocol
+
+- An object can implement `__call__()` to emulate a function.
+- E.g. `x(arg1, arg2)` invokes `x.__call__(arg1, arg2)`.
+
+## *4.17 Context Manager Protocol
+
+![4-7-methods-for-context-managers](images/4-7-methods-for-context-managers.png)
+- Primary use - To simplify the resource control involving system state (e.g. open files, network connections, locks).
+- [More details in 3.5](#35-context-managers-and-the-with-statement)
+
+## 4.18 Final Words: On Being Pythonic
+
+- Three **widespread use** protocols:
+  1. [Object Protocol](#49-object-protocol)
+      - `__repr__()` makes the state of an object easy to observe, facilitating debugging using `print()` or a logging library.
+  2. [Iteration Protocol](#414-iteration-protocol)
+      - Many core parts of Python and the standard library are designed to work with iterable objects. By supporting iteration, you'll automatically get extra functionality.
+  3. [Context Manager Protocol](#417-context-manager-protocol)

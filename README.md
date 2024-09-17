@@ -1138,3 +1138,232 @@
   2. [Iteration Protocol](#414-iteration-protocol)
       - Many core parts of Python and the standard library are designed to work with iterable objects. By supporting iteration, you'll automatically get extra functionality.
   3. [Context Manager Protocol](#417-context-manager-protocol)
+
+# 5 Functions
+
+## 5.1 Function Definitions
+
+- `TypeError` exception is raised when the order and number of arguments mismatch the parameters given in the function definition.
+
+## 5.2 Default Arguments
+
+- Default arguments are **evaluated once** when the function is first defined.
+  - Often leads to **surprising behavior** if **mutable objects** are used as a default:
+    ```py
+    # Buggy code:
+    def func(x, items=[]):
+        items.append(x)
+        return items
+    
+    func(1)  # -> [1]
+    func(2)  # -> [1, 2]
+    func(3)  # -> [1, 2, 3]
+    
+    
+    # Proper way:
+    def func(x, items=None):
+        if items is None:
+            items = []
+        items.append(x)
+        return items
+    ```
+- **Good practice:** Only use **immutable objects** for default arguments.
+
+## 5.3 Variadic Arguments (Positional)
+
+- `*` is used as a **prefix** on the **last parameter**.
+  ```py
+  def product(first, *args):
+      pass
+  ```
+- All of the extra arguments are placed into the `args` as a **tuple**.
+
+## 5.4 Keyword Arguments
+
+- Explicitly naming parameters:
+  ```py
+  def func(w, x, y, z):
+      pass
+  
+  # Keyword arguments.
+  func(x=3, y=22, w="hello", z=[1, 2])
+ 
+  # TypeError: Multiple values fo w.
+  func(3, 22, w="hello", z=[1, 2])
+  ```
+- ***`TypeError` exception** is raised when:
+  - Omit any of the required parameters.
+  - Keyword name doesn't match any of the parameter names.
+- Parameters after a `*` argument **forces** the use of keyword arguments:
+  ```py
+  def read_data(filename, *, debug=False):
+      data = "Some data"
+      return data
+  
+  data = read_data("Data.csv", True)  # TypeError exception is raised
+  data = read_data("Data.csv", debug=True)
+  ```
+
+## 5.5 Variadic Keyword  Arguments
+
+- Prefix the last argument with `**` to place all the extra keyword arguments in a **dictionary**.
+- The order of items in the dictionary is guaranteed to match the order in which keyword arguments were provided.
+- Useful for defining functions that accept a large number of potentially open-ended configuration options.
+
+## 5.6 Functions Accepting All Inputs
+
+- The combined use of `*args` and `**kwargs` is **commonly used to write wrappers, decorators, proxies** and so on.
+- Example:
+  ```py
+  # The function you want to create a wrapper for.
+  def parse_lines(lines, separator=",", types=(), debug=False):
+      for line in lines:
+          print("Processing...")
+
+  # Wrapper
+  # Benefit: 
+  # - Doesn't need to know about the arguments of parse_lines().
+  # - Simplify the maintenance of the parse_file().
+  def parse_file(filename, *args, **kwargs):          # <--
+      with open(filename, "rt") as file:
+          return parse_lines(file, *args, **kwargs)   # <--
+  ```
+
+## 5.7 Positional-Only Arguments
+
+- Many built-in functions only accept arguments by position, indicated by the presence of `/` in the function signature. E.g. `len()`, `abs()`, `range()`, and so on. 
+- Example:
+  ```py
+  # All arguments before the `/` can only be specified by position.
+  def func(x, y, /):
+      pass
+
+  func(1, 2)    # Ok
+  func(1, y=2)  # Error
+
+
+  # Use case: To avoid name clashes between argument names.
+  import time
+
+  # **kwargs might causes name clashes. E.g. seconds parameter.
+  def after(seconds, func, /, *args, **kwargs):
+      time.sleep(seconds)
+      return func(*args, **kwargs)
+
+  # Force the use of keyword arguments.
+  def duration(*, seconds, minutes, hours):
+      return seconds + 60 * minutes + 3600 * hours
+
+  # seconds=20 will be placed in **kwargs.
+  after(5, duration, seconds=20, minutes=3, hours=2)
+  ```
+
+## 5.8 Names, Documentation Strings, and Type Hints
+
+Attribute | Description
+----------|------------
+`__name__` | Get the function name.
+`__doc__` | Store the documentation string.
+`__annotations__` | Store hints in a dictionary that maps argument names to hints.
+
+## 5.9 Function Application and Parameter Passing
+
+- It's common for **functions with side effects** to return `None`.
+- Use `*` or `**` to pass arguments using a sequence or mapping:
+  ```py
+  def func(x, y, z):
+      print("Processing...")
+
+  # Pass a sequence as arguments.
+  s = (1, 2, 3)
+  result = func(*s)
+
+  # Pass a mapping as keyword arguments.
+  d = {"x": 1, "y": 2, "z": 3}
+  result = func(**d)
+  ```
+
+## 5.10 Return Values
+
+- If **no value** is specified or you **omit** the `return` statement, `None` is returned.
+- Return **named tuple** example:
+  ```py
+  from typing import NamedTuple
+
+  class ParseResult(NamedTuple):
+      name: str
+      value: str
+
+  def parse_value(text):
+      parts = text.split("=", 1)
+      return ParseResult(parts[0].strip(), parts[1].strip())
+  ```
+
+## 5.12 Scoping Rules
+
+- Each time a function executes, a **local namespace** is created.
+- Names (free variables) that are **used but not assigned** in the function body are found in the **global namespace** (enclosing module).
+- Two types of **name-related errors**:
+  1. `NameError` - Looking up an **undefined variable** in the **global environment**.
+  2. `UnboundLocalError`
+      - Looking up a **local variable** that **hasn't been assigned** a value.
+      - Often a result of **control flow bugs**.
+      ```py
+      # Example 1: Control flow bugs.
+      def func(x):
+          if x > 0:
+              y = 42
+          return x + y  # y not assigned if conditional is false.
+      
+      func(10)    # Returns 52
+      func(-10)   # UnboundLocalError: y referenced before assignment.
+
+
+      # Example 2: Careless use of in-place assignment operators.
+      def func():
+          n += 1  # UnboundLocalError: n is used before being assigned an initial value (n = n + 1).
+      ```
+- *Variables **never change their scope** (either global or local), determined at **function definition time**.
+  ```py
+  x = 42
+  def func():
+      print(x)  # Since x is declared inside the function, x is determined as a local variable. Accessing the unassigned local variable raises a UnboundLocalError.
+      x = 13    # Mark x as local variable.
+  ```
+- `global` declares names as belonging to the global namespace.
+  - **Note:** Use of `global` is usually considered **bad practice**.
+  - Use an instance of a `class` to modify and manage state instead.
+  ```py
+  x = 42
+  y = 37
+
+  def modify_global_var():
+      global x          # <--
+      x = 13
+      y = 0
+
+  modify_global_var()   # x: 13, y: 37
+
+
+  # Alternative to modifying global variables to manage state.
+  class Config:
+      x = 42
+  
+  def func():
+      Config.x = 13
+  ```
+- **Nested function**
+  - Variables in nested functions are resolved first in the local scope, then in successive enclosing scopes (from innermost to outermost).
+  - Inner functions can't modify local variables in outer functions.
+  - Use `nonlocal` to modify outer function variables.
+  - Use of nested functions and `nonlocal` declarations is **not common**.
+    - No outside visibility, which complicate testing and debugging.
+    - **Use case:** To break complex calculations into smaller parts and hiding internal implementation details.
+
+## 5.13 Recursion
+
+- There's a limit (**default: 1,000**) on the depth of recursive function calls.
+- Use `sys.getrecursionlimit()` to check the current maximum recursion depth.
+- Although the limit can be increased via `sys.setrecursionlimit()`, programs are still limited by the stack size enforced by the host OS.
+- If the **limit is exceeded**, a `RuntimeError` exception is raised.
+- In practice, limit issues only arise when working with **deeply nested recursive data structures** (e.g. **trees**, **graphs**).

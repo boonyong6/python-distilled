@@ -6,3 +6,5 @@ def b():
     print("b is called.")
 
 a()
+
+

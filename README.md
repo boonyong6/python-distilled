@@ -1009,7 +1009,7 @@
   - **Special case** - If `b` is a subtype of `a`, invoke `b.__gt__(a)`.
 - `NotImplemented` object is **not the same** as the `NotImplementedError` exception.
 - To **sort** objects or use `min()` or `max()`, `__lt__()` must be minimally defined.
-- `@total_ordering` class decorator in the `functools` module can generate all comparison methods as long as you minimally implement `__eq__()` and one of the other comparisons.
+- `@total_ordering` **class decorator** in the `functools` module can generate all comparison methods as long as you minimally implement `__eq__()` and one of the other comparisons.
 - **Sets** and **dictionary keys** rely on the object's `__hash__()` to work properly.
 - `__eq__()` should always be defined together with `__hash__()`. Since it's possible for two objects to have the same hash value, `__eq__()` is necessary to resolve collisions.
 
@@ -1327,7 +1327,7 @@ Attribute | Description
   ```py
   x = 42
   def func():
-      print(x)  # Since x is declared inside the function, x is determined as a local variable. Accessing the unassigned local variable raises a UnboundLocalError.
+      print(x)  # Since x is declared inside func(), x is determined as a local variable. Accessing x (unassigned) raises a UnboundLocalError.
       x = 13    # Mark x as local variable.
   ```
 - `global` declares names as belonging to the global namespace.
@@ -1355,7 +1355,7 @@ Attribute | Description
 - **Nested function**
   - Variables in nested functions are resolved first in the local scope, then in successive enclosing scopes (from innermost to outermost).
   - Inner functions can't modify local variables in outer functions.
-  - Use `nonlocal` to modify outer function variables.
+  - Use `nonlocal` to **modify** outer function variables.
   - Use of nested functions and `nonlocal` declarations is **not common**.
     - No outside visibility, which complicate testing and debugging.
     - **Use case:** To break complex calculations into smaller parts and hiding internal implementation details.
@@ -1367,3 +1367,108 @@ Attribute | Description
 - Although the limit can be increased via `sys.setrecursionlimit()`, programs are still limited by the stack size enforced by the host OS.
 - If the **limit is exceeded**, a `RuntimeError` exception is raised.
 - In practice, limit issues only arise when working with **deeply nested recursive data structures** (e.g. **trees**, **graphs**).
+
+## 5.14 The `lambda` Expression
+
+- Anonymous (aka unnamed) function
+  ```py
+  # Arguments are comma-separated.
+  a = lambda x, y: x + y
+  r = a(2, 3)
+  ```
+- **Can't have** multiple statements or non-expression statements (e.g. `try`, `while`).
+- **Use case:** To define small callback functions.
+  ```py
+  result = sorted(words, key=lambda word: len(set(word)))
+  ```
+- Caution when contains **free variables**.
+  ```py
+  x = 2
+  f = lambda y: x * y
+  x = 3
+  g = lambda y: x * y
+
+  # x is 3 at the time of evaluation (aka late binding).
+  print(f(10))  # 30
+  print(g(10))  # 30
+
+  
+  # To capture variable values at the time of definition.
+  # This works because default arguments are only evaluated at the time of definition.
+  x = 2
+  f = lambda y, x=x: x * y  # <--
+  x = 3
+  g = lambda y, x=x: x * y  # <--
+  
+  print(f(10))  # 20
+  print(g(10))  # 30
+  ```
+
+## 5.15 High-Order Functions
+
+- Means that functions can be **passed as arguments**, **placed in data structures**, and **returned by a function**.
+- When a function is **passed as arguments**, it implicitly **carries information related to the environment** (aka **closure**) in which the function was defined.
+  - **Closures** and **nested functions** are useful when writing **lazy or delayed evaluation** code.
+  - In closure, binding to variables is **not a "snapshot"**. Closure points to variables and values that they were **most recently assigned**. See example 2 below.
+  - **Ref. 1:** Use **default arguments** to capture a copy of variables.
+  ```py
+  # Example 1:
+  def main():
+      name = "Guido"
+      
+      def greeting():
+          print("Hello", name)
+
+      after(1, greeting)  # Print "Hello Guido"
+
+  # Example 2:
+  def make_greetings(names):
+      funcs = []
+      for name in names:
+          funcs.append(lambda: print("Hello", name)) # <--
+
+          # Ref. 1
+          # funcs.append(lambda name=name: print("Hello", name))
+
+      return funcs
+
+  a, b, c = make_greetings(["Guido", "Ada", "Margaret"])
+  
+  # All print "Hello Margaret"
+  a()
+  b()
+  c()
+  ```
+
+## 5.16 Argument Passing in Callback Functions
+
+- A design issue concerning the use of functions and functional programming (**function composition**).
+- **Method 1:** Use a **zero-argument** `lambda` expression (aka thunk):
+  - A general-purpose way to delay the evaluation.
+  ```py
+  after(10, lambda: add(2, 3))  # <--
+  ```
+- **Method 2:** Use `functools.partial()` to create a **partially evaluated** function.
+  ```py
+  from functools import partial
+  
+  def func(a, b, c, d):
+      print(a, b, c, d)
+  
+  g = partial(func, 1, 2, d=4)  # <--
+  g(3)    # func(1, 2, 3, 4)
+  g(10)   # func(1, 2, 3, 4)
+  ```
+- Semantic distinction:
+  Subject | `partial()` | Zero-argument `lambda`
+  --------|-------------|-----------------------
+  Arguments are evaluated and bound | when the partial function is first defined. | when the `lambda` function is executed (everything is delayed).
+- Objects (aka callables) created by `partial()` can be **serialized into bytes**, **saved in files**, and **transmitted across network connections** (Using the `pickle` standard library module).
+- **Method 3:** Accept callback arguments separately **as arguments to the outer calling function**.
+  ```py
+  def after(seconds, func, *args):
+      time.sleep(seconds)
+      func(*arg)
+  
+  after(10, add, 2, 3)
+  ```

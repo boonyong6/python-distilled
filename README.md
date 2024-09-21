@@ -1229,7 +1229,7 @@
           return parse_lines(file, *args, **kwargs)   # <--
   ```
 
-## 5.7 Positional-Only Arguments
+## 5.7 Positional-Only Arguments - `/`
 
 - Many built-in functions only accept arguments by position, indicated by the presence of `/` in the function signature. E.g. `len()`, `abs()`, `range()`, and so on. 
 - Example:
@@ -1321,13 +1321,16 @@ Attribute | Description
 
       # Example 2: Careless use of in-place assignment operators.
       def func():
-          n += 1  # UnboundLocalError: n is used before being assigned an initial value (n = n + 1).
+          # Same as, n = n + 1
+          n += 1  # UnboundLocalError: n is used before being assigned an initial value.
       ```
-- *Variables **never change their scope** (either global or local), determined at **function definition time**.
+- *Variables **never change their scope** (global and local), determined at **function definition time**.
   ```py
   x = 42
   def func():
-      print(x)  # Since x is declared inside func(), x is determined as a local variable. Accessing x (unassigned) raises a UnboundLocalError.
+      # Since x is declared inside func(), x is determined as a local variable. 
+      #   Hence, accessing x (unassigned) raises a UnboundLocalError.
+      print(x)
       x = 13    # Mark x as local variable.
   ```
 - `global` declares names as belonging to the global namespace.
@@ -1406,10 +1409,13 @@ Attribute | Description
 
 ## 5.15 High-Order Functions
 
-- Means that functions can be **passed as arguments**, **placed in data structures**, and **returned by a function**.
+- Means that functions **can be**:
+  - Passed as arguments
+  - Placed in data structures
+  - Returned by a function
 - When a function is **passed as arguments**, it implicitly **carries information related to the environment** (aka **closure**) in which the function was defined.
   - **Closures** and **nested functions** are useful when writing **lazy or delayed evaluation** code.
-  - In closure, binding to variables is **not a "snapshot"**. Closure points to variables and values that they were **most recently assigned**. See example 2 below.
+  - In closure, binding to variables is **not a "snapshot"**. Closure points to variables and values that they were **most recently assigned**. See **Example 2** below.
   - **Ref. 1:** Use **default arguments** to capture a copy of variables.
   ```py
   # Example 1:
@@ -1427,7 +1433,7 @@ Attribute | Description
       for name in names:
           funcs.append(lambda: print("Hello", name)) # <--
 
-          # Ref. 1
+          # Ref. 1              v
           # funcs.append(lambda name=name: print("Hello", name))
 
       return funcs
@@ -1459,10 +1465,10 @@ Attribute | Description
   g(3)    # func(1, 2, 3, 4)
   g(10)   # func(1, 2, 3, 4)
   ```
-- Semantic distinction:
-  Subject | `partial()` | Zero-argument `lambda`
-  --------|-------------|-----------------------
-  Arguments are evaluated and bound | when the partial function is first defined. | when the `lambda` function is executed (everything is delayed).
+- Arguments are evaluated and bound when...
+  `partial()` | Zero-argument `lambda`
+  ------------|-----------------------
+  The partial function is first defined. | The `lambda` function is executed (everything is delayed).
 - Objects (aka callables) created by `partial()` can be **serialized into bytes**, **saved in files**, and **transmitted across network connections** (Using the `pickle` standard library module).
 - **Method 3:** Accept callback arguments separately **as arguments to the outer calling function**.
   ```py
@@ -1653,7 +1659,7 @@ Attribute | Description
     
     assert inspect.signature(func1) == inspect.signature(func2)
     ```
-  - To override signature metadata:
+  - To **override** signature metadata:
     ```py
     def func(x, y, z=None):
         pass
@@ -1664,11 +1670,11 @@ Attribute | Description
 
 ## 5.21 Environment Inspection
 
-- To inspect the execution environment of a function:
+- To inspect the **execution environment** of a function:
   Built-in function | Description
   ------------------|------------
-  `globals()` | Return the dictionary that's serving as the global namespace.<br />The same as `<func>.__globals__`. See [Section 5.20](#520-function-introspection-attributes-and-signatures).
-  `locals()` | Return a dictionary containing all **local** and **closure** variables.<br />Not the actual data structure (Changing an item in this dictionary has no effect on the underlying variable).
+  `globals()` | - Return the dictionary that's serving as the global namespace.<br />- The same as `<func>.__globals__`. See [Section 5.20](#520-function-introspection-attributes-and-signatures).
+  `locals()` | - Return a dictionary containing all **local** and **closure** variables.<br />- Not the actual data structure (Changing an item in this dictionary has no effect on the underlying variable).
 - Use `inspect.currentframe()` or `sys._getframe(0)` to get the **current stack frame** of a function.
 - Use `<frame>.f_back` or `sys._getframe(1)` to get the **caller's stack frame**.
 - Stack frame attributes:
@@ -1698,14 +1704,13 @@ Attribute | Description
       exec(code, d)
       return d["__init__"]
 
-
   class Vector:
       __init__ = make_init("x", "y", "z")
   ```
 
 ## 5.23 Asynchronous Functions and `await`
 
-- Aka coroutines, awaitables
+- Aka **coroutines**, **awaitables**
 - Mostly used by programs involving **concurrency** and the `asyncio` module.
 - Async functions **never execute on their own**.
 - Async functions can call other async functions using an `await`.

@@ -697,7 +697,7 @@
 
 ## 3.3 Loops and Iteration
 
-- `for` statement works with any object that implements the [**iterator protocol**](#414-iteration-protocol).
+- `for` statement works with any object that implements the [**iteration protocol**](#414-iteration-protocol).
 - The scope of the iteration variable is not private to the `for` statement.
 - Use `enumerate()` to keep track of a numerical index:
   ```py
@@ -1167,7 +1167,7 @@
         items.append(x)
         return items
     ```
-- **Good practice:** Only use **immutable objects** for default arguments.
+- **Best practice:** Only use **immutable objects** for default arguments.
 
 ## 5.3 Variadic Arguments (Positional)
 
@@ -1472,3 +1472,271 @@ Attribute | Description
   
   after(10, add, 2, 3)
   ```
+
+## 5.17 Returning Results from Callbacks
+
+- It's difficult for the caller to identify the cause of the exception because it could be raised by either the **outer function** or the **callback function**.
+- **To distinguish** between these two cases:
+  - Option 2 works by deferring the result reporting - when accessing the result via `result()`.
+  - Option 2 style of **boxing a result** is an increasingly common pattern. E.g. You can find its use in **concurrency primitives** such as threads and processes.
+  ```py
+  # Option 1: Use chained exceptions.
+  class CallbackError(Exception):
+      pass
+
+  def after(seconds, func, *args):
+      time.sleep(seconds)
+      try:
+          return func(*args)
+      except Exception as e:
+          raise CallbackError("Callback function failed.") from e  # <--
+
+  try:
+      r = after(1, add, "5", 6)
+  except CallbackError as e:
+      print("It failed. Reason:", e.__cause__)
+
+  # Option 2: Use some kind of result instance.
+  class Result:
+      def __init__(self, value=None, error=None):
+          self._value = value
+          self._error = error
+
+      def result(self):
+          if self._error:
+              raise self._error
+          return self._value
+  
+  def after_r(seconds, func, *args):
+      time.sleep(seconds)
+      try:
+          return Result(value=func(*args))    # <--
+      except Exception as e:
+          return Result(error=e)              # <--
+
+  r = after_r(1, add, 2, 3)
+  print(r.result())  # Print 5
+
+  t = after_r(1, add, "2", 3)
+  print(t.result())  # Raise TypeError
+  ```
+
+## 5.18 Decorators
+
+- A function that create a **wrapper** around another function to **alter** or **enhance** the behavior.
+- Denoted using the `@` symbol.
+  ```py
+  # After func() definition, it is passed to decorate(), which returns 
+  #   an object that replaces the original func().
+  @decorate
+  def func(x):
+      pass
+  
+  # The preceding code is shorthand for the following:
+  def func(x):
+      pass
+
+  func = decorate(func)
+  ```
+- Decorator implementation example (**no arguments**):
+  - Wrappers hide the original function metadata (see [Section 5.8](#58-names-documentation-strings-and-type-hints)).
+  - **Best practice:** Use `@wraps()` decorator to **copy function metadata**.
+  ```py
+  from functools import wraps
+
+  # Decorator definition:
+  def trace(func):
+      @wraps(func)  # Copy func() metadata to call().
+      # Wrapper
+      def call(*args, **kwargs):  # Arguments for func()
+          # Additional processing that the decorator adds.
+          print("Calling", func.__name__)
+          
+          # execute func() and return its result.
+          return func(*args, **kwargs)
+      return call
+
+  # Decorator usage:
+  @trace
+  def square(x):
+      return x * x
+  ```
+- The **order** in which decorators appear **might matter**.
+  - In **class definitions**, `@classmethod` and `@staticmethod` often have to be placed at the outermost level because they return objects that're different than a normal function.
+- Decorators can **accept arguments** (via **decorator factory**).
+  ```py
+  from functools import wraps
+
+  def create_decorator(arg):  # Decorator factory
+      def decorator(func):
+          @wraps(func)
+          def wrapper(*args, **kwargs):
+              print(arg)      # Use arg inside the wrapper.
+              return func(*args, **kwargs)
+          return wrapper
+      return decorator
+
+  # To reuse the decorator instance.
+  decorator = create_decorator("argument value")
+
+  @decorator
+  def func1():
+      pass
+  
+  @decorator
+  def func2():
+      pass
+  ```
+- Decorators **don't necessarily have to replace** the original function.
+  ```py
+  _event_handlers = {}
+
+  def event_handler(event):  # Decorator factory
+      def register_function(func):  # Decorator without wrapper
+          # Register an event handler at function definition time.
+          _event_handlers[event] = func  
+          return func
+      return register_function
+
+  @event_handler("BUTTON")
+  def handle_button(msg):
+      pass
+
+  @event_handler("RESET")
+  def handle_reset(msg):
+      pass
+  ```
+
+## 5.19 Map, Filter, and Reduce
+
+- Common list operations.
+- Can be implemented using **list comprehensions**, **generator expressions** and built-in functions.
+- `map()` and `filter()` are the same as their **generator** equivalents.
+- Example:
+  ```py
+  nums = [1, 2, 3, 4, 5]
+
+  # Map
+  squares_lc = [x * x for x in nums]
+  squares_gen = (x * x for x in nums)
+  squares_fn = map(lambda x: x * x, nums)
+
+  # Filter
+  nums_gt_lc = [x for x in nums if x > 2]
+  nums_gt_gen = (x for x in nums if x > 2)
+  nums_gt_fn = filter(lambda x: x > 2, nums)
+
+  # Reduce
+  from functools import reduce
+  total_fn = reduce(lambda x, y: x + y, nums)
+  
+  total_agg = sum(nums)
+  ```
+
+## 5.20 Function Introspection, Attributes, and Signatures
+
+![5-1-function-attributes](images/5-1-function-attributes.png)
+- Useful in **debugging** and **logging**.
+- Functions can have **attributes** attached to them.
+  - Attributes are not visible within the function body. (Not local variables and not in the global namespace)
+  - **Use case:** To store extra metadata (aka function tagging).
+- `inspect.signature()` is useful for obtaining detailed information about the parameters.
+  - **Use case:** To compare between signatures (might be useful in frameworks).
+    ```py
+    import inspect
+    
+    def func1(x, y):
+        pass
+    
+    def func2(x, y):
+        pass
+    
+    assert inspect.signature(func1) == inspect.signature(func2)
+    ```
+  - To override signature metadata:
+    ```py
+    def func(x, y, z=None):
+        pass
+
+    # Hide the z parameter from further inspection.
+    func.__signature__ = inspect.signature(lambda x, y: None)
+    ```
+
+## 5.21 Environment Inspection
+
+- To inspect the execution environment of a function:
+  Built-in function | Description
+  ------------------|------------
+  `globals()` | Return the dictionary that's serving as the global namespace.<br />The same as `<func>.__globals__`. See [Section 5.20](#520-function-introspection-attributes-and-signatures).
+  `locals()` | Return a dictionary containing all **local** and **closure** variables.<br />Not the actual data structure (Changing an item in this dictionary has no effect on the underlying variable).
+- Use `inspect.currentframe()` or `sys._getframe(0)` to get the **current stack frame** of a function.
+- Use `<frame>.f_back` or `sys._getframe(1)` to get the **caller's stack frame**.
+- Stack frame attributes:
+![5-2-frame-attributes](images/5-2-frame-attributes.png)
+- Useful for **debugging** and **code inspection**.
+
+## 5.22 Dynamic Code Execution and Creation
+
+- `exec()` executes within the local and global namespace of the caller.
+- Changes to local variables have **no effect**.
+  ```py
+  def func():
+      x = 10
+      exec("x = 20")
+      print(x)  # Print 10
+  ```
+- `exec()` can accept dictionary objects that serve as the global and local namespace.
+- **Use case:** Creating functions and methods.
+  - Used in various parts of the standard library (E.g. `namedtuple()`, `@dataclass`).
+  ```py
+  def make_init(*names):
+      params = ",".join(names)
+      code = f"def __init__(self, {params}):\n"
+      for name in names:
+          code += f"  self.{name} = {name}\n"
+      d = {}
+      exec(code, d)
+      return d["__init__"]
+
+
+  class Vector:
+      __init__ = make_init("x", "y", "z")
+  ```
+
+## 5.23 Asynchronous Functions and `await`
+
+- Aka coroutines, awaitables
+- Mostly used by programs involving **concurrency** and the `asyncio` module.
+- Async functions **never execute on their own**.
+- Async functions can call other async functions using an `await`.
+  ```py
+  async def main():
+      for name in ["Paula", "Thomas", "Lewis"]:
+          a = await make_greeting(name)  # <--
+          print(a)
+
+  asyncio.run(main())
+  ```
+- Support for asynchronous functions **has to built as a special case**. E.g.:
+  - **Async context manager** (context manager protocol):
+    ```py
+    class AsyncManager(object):
+        def __init__(self, x):
+            self.x = x
+        
+        async def yow(self):
+            print("yowing...")
+
+        async def __aenter__(self):  # <--
+            return self
+        
+        async def __aexit__(self, ty, val, tb):  # <--
+            pass
+
+    async def main_mgr():
+        async with AsyncManager(42) as mgr:  # <--
+            await mgr.yow()
+
+    asyncio.run(main_mgr())
+    ```
+  - **Async iterator** (iteration protocol) - Implement `__aiter__()` and `__anext__()`. These are used by the `async for` statement.

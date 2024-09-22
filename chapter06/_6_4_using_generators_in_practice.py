@@ -3,6 +3,7 @@
 import pathlib
 import re
 
+# Before
 for path in pathlib.Path(".").rglob("*.py"):
     if path.exists():
         with path.open("rt", encoding="latin-1") as file:
@@ -13,7 +14,7 @@ for path in pathlib.Path(".").rglob("*.py"):
                     if "spam" in comment:
                         print(comment)
 
-# Refactored version
+# After (Refactored version)
 def get_paths(top_dir, pattern):
     for path in pathlib.Path(top_dir).rglob(pattern):
         if path.exists():
@@ -26,7 +27,7 @@ def get_files(paths):
 
 def get_lines(files):
     for file in files:
-        yield from file  # Produces values (lines) from file object.
+        yield from file  # Produces values (lines) from a file object (generator).
 
 def get_comments(lines):
     for line in lines:

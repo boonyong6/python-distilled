@@ -698,7 +698,7 @@
 ## 3.3 Loops and Iteration
 
 - `for` statement works with any object that implements the [**iteration protocol**](#414-iteration-protocol).
-- The scope of the iteration variable is not private to the `for` statement.
+- The **scope** of the **iteration variable** is **not private** to the `for` statement.
 - Use `enumerate()` to keep track of a numerical index:
   ```py
   # _ is a throw-away variable.
@@ -1644,7 +1644,7 @@ Attribute | Description
 ![5-1-function-attributes](images/5-1-function-attributes.png)
 - Useful in **debugging** and **logging**.
 - Functions can have **attributes** attached to them.
-  - Attributes are not visible within the function body. (Not local variables and not in the global namespace)
+  - Attributes are **not visible** within the function body. (Not local variables and not in the global namespace)
   - **Use case:** To store extra metadata (aka function tagging).
 - `inspect.signature()` is useful for obtaining detailed information about the parameters.
   - **Use case:** To compare between signatures (might be useful in frameworks).
@@ -1668,7 +1668,7 @@ Attribute | Description
     func.__signature__ = inspect.signature(lambda x, y: None)
     ```
 
-## 5.21 Environment Inspection
+## 5.21 Execution Environment Inspection
 
 - To inspect the **execution environment** of a function:
   Built-in function | Description
@@ -1681,7 +1681,7 @@ Attribute | Description
 ![5-2-frame-attributes](images/5-2-frame-attributes.png)
 - Useful for **debugging** and **code inspection**.
 
-## 5.22 Dynamic Code Execution and Creation
+## 5.22 Dynamic Code Execution and Creation - `exec()`
 
 - `exec()` executes within the local and global namespace of the caller.
 - Changes to local variables have **no effect**.
@@ -1745,3 +1745,116 @@ Attribute | Description
     asyncio.run(main_mgr())
     ```
   - **Async iterator** (iteration protocol) - Implement `__aiter__()` and `__anext__()`. These are used by the `async for` statement.
+
+# 6 Generators
+
+## 6.1 Generators and `yield`
+
+- Use of `yield` keyword defines a generator.
+- **Use case:** To produce values for use in iteration.
+- Only executes the function when you start iterating on it.
+- `next()` is a shorthand for `<generator>.__next__()`.
+- **Stopped** by:
+  - Reaching the end of the function.
+  - Using a `return` statement.
+- A `StopIteration` exception is raised that terminates a `for` loop.
+- If a generator function returns a non-`None` value, it is attached to the `StopIteration` exception.
+  - **Normally**, generators **don't return a value**.
+  ```py
+  def func():
+      yield 37
+      return 42  # <--
+  ```
+- Use **`try-finally`** or a **context manager** to handle **cleanup** when a generator aborts early (`break`).
+  - Cleanup actions are executed when the abandoned generator is [garbage-collected](#43-reference-counting-and-garbage-collection).
+  ```py
+  def countdown(n):
+      print(f"Counting down from {n}")
+      try:
+          while n > 0:
+              yield n
+              n -= 1
+      finally:  # Perform cleanup when the generator is garbage-collected.
+          print(f"Only make it to {n}")
+
+  for n in countdown(10):
+      if n == 2:
+          break  # Abort early, countdown(10) is partially consumed.
+      print(f"Processing {n}...")
+  ```
+
+## 6.2 Restartable Generators
+
+- To allow **repeated iteration**, define the generator as a `class`.
+  ```py
+  class countdown:
+      def __init__(self, start):
+          self.start = start
+
+      def __iter__(self):
+          n = self.start
+          while n > 0:
+              yield n
+              n -= 1
+  ```
+
+## 6.3 Generator Delegation - `yield from`
+
+- `yield` never executes by itself, it always have to be driven by `for` loop or `next()`.
+- `yield from` **delegates** the iteration process to an outer iteration.
+  ```py
+  # Note: countup() and countdown() are generator functions.
+
+  # yield from helps drive iteration.
+  def up_and_down(n):
+      yield from countup(n)
+      yield from countdown(n)
+
+  # Without yield from (drive iteration manually). 
+  def up_and_down(n):
+      for x in countup(n):
+          yield x
+      for x in countdown(n):
+          yield x
+  ```
+
+## 6.4 Using Generators in Practice
+
+- Generators are useful for **structuring data handling problems** related to **pipelines** (pass data to a series of functions) and **workflows** (a series of tasks for an operation).
+- **Use case:** Restructuring code that consists of deeply nested `for` loops and conditionals.
+- [Code examples](chapter06/_6_4_using_generators_in_practice.py)
+- **Key takeaway:** The delayed evaluation of generators allows you to alter the spacetime dimensions of normal function evaluation.
+
+## 6.5 Enhanced Generators and `yield` Expressions
+
+```py
+def receiver():
+    print("Ready to receive")
+    while True:
+        try:
+            n = yield  # <--
+            print("Got", n)
+        except RuntimeError:
+            print("Handling runtime error...")
+        except GeneratorExit:
+            print("Performing cleanup...")
+            return
+
+enh_gen = receiver()
+
+# <generator>.send(None) executes statements in the generator function and pauses at the yield expression, waiting to get the value sent by the subsequent <generator>.send(<obj>).
+enh_gen.send(None)  # Required to initialize the generator.
+enh_gen.send("Hello")
+
+# Raise an exception inside the generator.
+enh_gen.throw(RuntimeError, "Dead")
+
+# Raise a GeneratorExit exception at the current yield. You can catch it to perform cleanup actions.
+enh_gen.close()
+```
+
+## 6.6 Applications of Enhanced Generators
+
+- Can be used to implement different kinds of evaluation and control flow.
+- [Code examples](chapter06/_6_6_applications_of_enhanced_generators.py)
+- If you see `yield` being used in a context that is not involving iteration, it is probably using the enhanced features such as `send()` or `throw()`. 

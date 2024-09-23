@@ -61,7 +61,7 @@ def line_receiver():
     data = bytearray()
     line = None
     line_count = 0
-    while True:
+    while True:  # <--
         # 1. Pause at "yield line" (a value is returned)
         # 2. Resume at "part = yield" (assign the value from
         #   "<generator>.send(<value>)" to a variable).

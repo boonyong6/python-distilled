@@ -1842,7 +1842,9 @@ def receiver():
 
 enh_gen = receiver()
 
-# <generator>.send(None) executes statements in the generator function and pauses at the yield expression, waiting to get the value sent by the subsequent <generator>.send(<obj>).
+# <generator>.send(None) executes statements in the generator function and 
+#   pauses at the yield expression, waiting to get the value sent by 
+#   the subsequent <generator>.send(<obj>).
 enh_gen.send(None)  # Required to initialize the generator.
 enh_gen.send("Hello")
 
@@ -1855,6 +1857,17 @@ enh_gen.close()
 
 ## 6.6 Applications of Enhanced Generators
 
-- Can be used to implement different kinds of evaluation and control flow.
+- Can be used to implement different kinds of evaluation and **control flow**.
 - [Code examples](chapter06/_6_6_applications_of_enhanced_generators.py)
 - If you see `yield` being used in a context that is not involving iteration, it is probably using the enhanced features such as `send()` or `throw()`. 
+
+## 6.7 Generators and the Bridge to Awaiting
+
+- `await` statement involves interacting wit a **generator** in disguise.
+- The underlying protocol used by `await` - `__await__()`
+
+## 6.8 Final Words: A Brief History of Generators and Looking Forward
+
+- There is almost no reason to ever implement an **iterator** using anything other than a **generator**.
+- Generators formed **the basis of "async" frameworks** used for **network programming** and **concurrency**.
+- **Note:** If you find yourself defining a generator function and you're **not** performing iteration, you should probably reconsider your approach.

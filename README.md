@@ -1348,9 +1348,9 @@ Attribute | Description
   modify_global_var()   # x: 13, y: 37
 
 
-  # Alternative to modifying global variables to manage state.
+  # Alternative to modifying global variables to manage state (class variable / class attribute).
   class Config:
-      x = 42
+      x = 42  # <--
   
   def func():
       Config.x = 13
@@ -1810,7 +1810,7 @@ Attribute | Description
       yield from countup(n)
       yield from countdown(n)
 
-  # Without yield from (drive iteration manually). 
+  # Without using yield from (drive iteration manually). 
   def up_and_down(n):
       for x in countup(n):
           yield x
@@ -1871,3 +1871,109 @@ enh_gen.close()
 - There is almost no reason to ever implement an **iterator** using anything other than a **generator**.
 - Generators formed **the basis of "async" frameworks** used for **network programming** and **concurrency**.
 - **Note:** If you find yourself defining a generator function and you're **not** performing iteration, you should probably reconsider your approach.
+
+# 7 Classes and Object-Oriented Programming
+
+## 7.2 The `class` Statement
+
+- May **optionally** include a **documentation string** and **type hints** (purely metadata).
+  ```py
+  class Account:
+      # Documentation string:
+      """
+      A simple bank account.
+      """
+      
+      # Type hints:
+      owner: str
+      balance: float
+
+      def __init__(self, owner, balance):
+          self.owner = owner
+          self.balance = balance
+      
+      # Other methods...
+  ```
+
+## 7.3 Instances
+
+- Use `vars()` to view **instance variables (attributes)**.
+  ```py
+  a = Account("Guido", 1000.0)
+  vars(a)  # -> {'owner': 'Guido', 'balance': 1000.0}
+  ```
+- Every instance **keeps a link to its class** via its associated type.
+  ```py
+  type(a)           # -> <class 'account.Account'>
+  type(a).deposit   # -> <function Account.deposit at 0x0000016165CFFE20>
+  ```
+
+## 7.4 Attribute Access
+
+- **Three** basic operations:
+  ```py
+  a = Account("Guido", 1000.0)
+
+  a.owner             # 1. get
+  a.balance = 750.0   # 2. set
+  del a.balance       # 3. delete
+
+  a.balance  # Raise an AttributeError exception.
+  ```
+- You can add new attributes **after** an object is created.
+  ```py
+  a = Account("Guido", 1000.0)
+
+  a.creation_date = "2019-02-14"  # <--
+  ```
+- **Alternative** to dot (.) operator - `getattr()`, `setattr()`, `delattr()`
+  ```py
+  a = Account("Guido", 1000.0)
+
+  getattr(a, "owner")           # 1. get
+  setattr(a, "balance", 750.0)  # 2. set
+  delattr(a, "balance")         # 3. delete
+
+  hasattr(a, "balance")   # -> False
+
+  getattr(a, "withdraw")(100)  # Same as a.withdraw(100)
+  ```
+- `getattr()` can take an **optional default value** (return the default value if the attribute is **not exist**).
+  ```py
+  a = Account("Guido", 1000.0)
+  
+  getattr(a, "balance", "unknown")        # -> 1000.0
+  getattr(a, "creation_date", "unknown")  # -> "unknown"
+  ```
+- When you **access a method as an attribute**, you get a **bound method**.
+  ```py
+  a = Account("Guido", 1000.0)
+
+  w = a.withdraw
+  w       # -> Bound method
+  w(100)  # Same as, Account.withdraw(a, 100)
+  ```
+
+## 7.5 Scoping Rules
+
+- In methods, references to attributes and methods must be **fully qualified**. E.g. `self.balance`, `self.withdraw(100)`.
+- **The lack of a class-level scope** in Python differs from other programming languages.
+
+## 7.6 Operator Overloading and Protocols
+
+- See [Section 4.18](#418-final-words-on-being-pythonic)
+
+## 7.7 Inheritance
+
+- Inheritance is specified with **a comma-separated list** of base-class names.
+  - Python supports multiple inheritance, see [Section 7.19](#todo).
+- If there is **no specified base class**, a class **implicitly inherits** from `object`.
+- `object` class is the **root** of all Python objects. It provides the **default implementation** of methods such as `__str__()` and `__repr__()`.
+- **Use cases:**
+  - To extend an existing class with **new methods**.
+  - To **redefine existing methods**.
+    - (Occasionally) And also need to **call the original implementation** (using `super()`).
+  - (Less common) To add **additional attributes**.
+    - When `__init__()` is redefined, it is the responsibility of the child to initialize its parent using `super().__init__()`.
+  - [Code examples](chapter07/_7_7_inheritance.py)
+- Inheritance can **break code in subtle ways**. E.g. hardcoding the class name in the `__repr__()`, instead of using `type(self).__name__` to get the name dynamically.

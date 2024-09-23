@@ -23,7 +23,8 @@ asyncio.run(main())
 
 
 # Async protocols
-class AsyncManager(object):
+# class AsyncManager(object):  # `object` is the implicit base class for classes that don't specify any base class.
+class AsyncManager():
     def __init__(self, x):
         self.x = x
     

@@ -1977,3 +1977,164 @@ enh_gen.close()
     - When `__init__()` is redefined, it is the responsibility of the child to initialize its parent using `super().__init__()`.
   - [Code examples](chapter07/_7_7_inheritance.py)
 - Inheritance can **break code in subtle ways**. E.g. hardcoding the class name in the `__repr__()`, instead of using `type(self).__name__` to get the name dynamically.
+
+## 7.8 Avoiding Inheritance via Composition
+
+- **Don't** use inheritance if you are merely using a class as a component (to reuse some of its methods) in building something else.
+
+## 7.9 Avoiding Inheritance via Functions
+
+- If you're writing a lot of **single-method classes**, consider **using functions** instead.
+- **Premature abstraction** is often not a good thing.
+
+## 7.10 Dynamic Binding and Duck Typing
+
+- Dynamic binding (aka duck typing) is the **runtime mechanism** that Python uses **to find the attributes** of objects.
+- Variables **don't** have an **associated type**.
+- To make a **customized version** of an existing object, you can simply create a new object that has the **same attributes**. This approach is often used to maintain loose coupling of program components.
+
+## 7.11 The Danger of Inheriting from Built-in Types
+
+- Most of the built-in types are implemented in C.
+- E.g. `dict.update()` directly manipulates the data **without ever** routing through the redefined `__setitem__()`.
+- `collections` module has special classes `UserDict`, `UserList`, and `UserString` that can be used to make safe subclasses.
+
+## 7.12 Class Variables and Methods
+
+- **Class variables** can also be **accessed via instances**.
+  ```py
+  class Account:
+      # Class variable
+      num_accounts = 0
+
+      def __init__(self, owner, balance):
+          self.owner = owner
+          self.balance = balance
+          Account.num_accounts += 1
+  
+
+  Account.num_accounts
+
+  a = Account("Ben", 50.0)
+  # Attribute lookup on instances checks the associated class if there's no matching attribute on the instance itself.
+  a.num_accounts  # <--
+  ```
+- **Class methods**
+  - Methods applied to the class itself, not to instances.
+  - The **first argument** is always **the class itself**, named `cls` by convention.
+  - (Most common) **Use case:** Alternate constructor (aka **factory method**)
+  - **Naming convention:** `from_` as a prefix.
+    ```py
+    class Account:
+        def __init__(self, owner, balance)
+            self.owner = owner
+            self.balance = balance
+        
+        @classmethod
+        def from_data(cls, data):  # <--
+            # Same as, Account(data.owner, data.balance)
+            return cls(data.owner, data.balance)  
+        
+        # Other methods...
+    ```
+- **Configuration via class variables and inheritance** is a common tool for adjusting the behavior of instances.
+- [Code examples](chapter07/_7_12_class_variables_and_methods.py)
+
+## 7.13 Static Methods
+
+- A class can be merely used as a **namespace** for static methods.
+- Static methods don't have the `self` or `cls` argument, there're just ordinary functions.
+  ```py
+  class Ops:
+      @staticmethod
+      def add(x, y):  # <--
+          return x + y
+  ```
+- Classes containing a collection of static methods can be used to implement "swappable" or "configurable" behavior (**strategy pattern**). See [code example](chapter07/_7_13_static_methods.py).
+
+## 7.14 A Word about Design Patterns
+
+- Many of the design patterns are aimed at **working around** specific issues that arise from the **strict static type system**.
+- The **dynamic nature of Python** renders a lot of these patterns **obsolete**, an **overkill**, or **simply unnecessary**.
+
+## 7.15 Data Encapsulation and Private Attributes
+
+- Python relies on **naming conventions** as a means of signaling intended usage.
+- Names starting with **a single leading underscore (`_`)** indicate **internal implementation**.
+- It is acceptable for **subclasses** to access **internal attributes** prefixed with `_`.
+- To have an even **more private attribute**, prefix the name with **two leading underscore (`__`)**.
+  - All names such as `__name` are **automatically renamed** to  `_<ClassName>__name`.
+  - So, private names used in a superclass **won't be overwritten** by **identical names** in a child class.
+  ```py
+  class A:
+      def __init__(self):
+          self.__x = 3   # <--
+
+      def __spam(self):  # <--
+          print(f"{A.__spam.__qualname__}", self.__x)
+      
+      def bar(self):
+          self.__spam()
+
+  class B(A):
+      def __init__(self):
+          super().__init__()
+          self.__x = 37  # <--
+      
+      def __spam(self):  # <--
+          print(f"{B.__spam.__qualname__}", self.__x)
+      
+      def grok(self):
+          self.__spam()
+
+  b = B()
+  b.bar()     # A.__spam 3
+  b.grok()    # B.__spam 37
+  print(vars(b))  # {'_A__x': 3, '_B__x': 37}
+  ```
+- The mangling (renaming) process only **occurs once** when the class is defined. So, no extra overhead to program execution.
+- For `getattr()`, `setattr()`, `delattr()`, or `hasattr()`, you need to explicitly use `_<Classname>__<name>`.
+
+## 7.17 Properties
+
+- Use **property features** to **intercepts attribute access** and handles it via **user-defined methods**.
+- `@property`decorator is used to **establish an attribute as a property**.
+  - It is applied to a method (**getter**) that gets the attribute value.
+- `@<property>.setter` decorator is used to optionally implements a method for **validating** the argument and **setting** the attribute value.
+- Existing attributes can be easily turned into properties without changing any pre-existing code.
+- Properties allow for **interception of attribute names**.
+  ```py
+  # Property methods - getter, setter, and deleter
+  class SomeClass:
+      def __init__(self, attr):
+          self.attr = attr
+
+      @property
+      def attr(self):
+          print("Getting")
+          return self._attr
+
+      @attr.setter
+      def attr(self, value):
+          print("Setting")
+          self._attr = value
+
+      @attr.deleter
+      def attr(self):
+          print("Deleting")
+          del self._attr
+
+  s = SomeClass("Some value.")
+  print(s.attr)
+  del s.attr
+  ```
+- It's common to use properties to implement **read-only computed data attributes** and to **standardize their access**, just like simple attributes - `(method) box.area()` -> `(property) box.area`.
+- Methods are implicitly handled like properties. They intercept attribute access and create the **bound method** behind the scenes.
+  ```py
+  class SomeClass:
+      def yow(self):
+          print("Yow!")
+
+  s = SomeClass()
+  s.yow  # Bound method
+  ```

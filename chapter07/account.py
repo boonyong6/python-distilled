@@ -7,9 +7,12 @@ class Account:
     owner: str
     balance: float
 
+    num_accounts = 0
+
     def __init__(self, owner, balance):
         self.owner = owner
         self.balance = balance
+        Account.num_accounts += 1
 
     def __repr__(self):
         return f"{type(self).__name__}({self.owner!r}, {self.balance!r})"

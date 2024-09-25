@@ -1973,7 +1973,7 @@ enh_gen.close()
   - To extend an existing class with **new methods**.
   - To **redefine existing methods**.
     - (Occasionally) And also need to **call the original implementation** (using `super()`).
-  - (Less common) To add **additional attributes**.
+  - **(Less common)** To add **additional attributes**.
     - When `__init__()` is redefined, it is the responsibility of the child to initialize its parent using `super().__init__()`.
   - [Code examples](chapter07/_7_7_inheritance.py)
 - Inheritance can **break code in subtle ways**. E.g. hardcoding the class name in the `__repr__()`, instead of using `type(self).__name__` to get the name dynamically.
@@ -2016,7 +2016,8 @@ enh_gen.close()
   Account.num_accounts
 
   a = Account("Ben", 50.0)
-  # Attribute lookup on instances checks the associated class if there's no matching attribute on the instance itself.
+  # Attribute lookup on instances checks the associated class if there's 
+  #   no matching attribute on the instance itself.
   a.num_accounts  # <--
   ```
 - **Class methods**
@@ -2137,4 +2138,123 @@ enh_gen.close()
 
   s = SomeClass()
   s.yow  # Bound method
+  ```
+
+## 7.18 Types, Interfaces, and Abstract Base Classes
+
+- Use `isinstance(<obj>, <cls>)` to test for **membership**.
+- Use `issubclass(A, B)` to test whether class `A` is a subclass of class `B`.
+- It's common for **interfaces** to be defined as **abstract base classes** using the `abc` module (base class `ABC`, `@abstractmethod`).
+  - An abstract method in the base can still be called from a subclass using `super()`.
+  ```py
+  from abc import ABC, abstractmethod
+
+  class Stream(ABC):    # <--
+      @abstractmethod   # <--
+      def receive(self):
+          print("Base implementation")
+      
+      @abstractmethod
+      def send(self, msg):
+          pass
+  
+  class SocketStream(Stream):
+      def receive(self):
+          print("Subclass implementation")
+          super().receive()  # <--
+      
+      def send(self, msg):
+          pass
+  ```
+
+## 7.19 Multiple Inheritance, Interfaces, and Mixins
+
+- **Multiple inheritance** is used as a highly **specialized tool** for organization and code reuse.
+- **Use case 1:** Organizing type and **interface (abstract base class)** relations.
+  - To specify which interfaces have been implemented by a child class.
+  - **Not about implementation**, but type relations.
+  - Allows you to perform **type checks**.
+  ```py
+  from abc import ABC, abstractmethod
+
+  class Stream(ABC):
+      @abstractmethod
+      def receive(self):
+          pass
+
+  class Iterable(ABC):
+      @abstractmethod
+      def __iter__(self):
+          pass
+
+  class MessageStream(Stream, Iterable):  # <--
+      def receive(self):
+          ...
+      def __iter__(self):
+          ...
+
+  m = MessageStream()
+  isinstance(m, Stream)     # -> True
+  isinstance(m, Iterable)   # -> True
+  ```
+- **Use case 2:** To define **mixin classes**.
+  - A mixin class is a class that **modifies** or **extends the functionality** of other classes.
+  - Mixin classes must be used **in combination** with other classes. They **don't work alone**.
+  - **Best practice:** Include **"Mixin"** as a **suffix** to the class name.
+  - **Design guidelines:**
+    - It's common for mixins to **share a common parent** which provides a **default implementation** of methods.
+    - All implementations of a mixin method should have an **identical/compatible function signature**.
+  - Always use `super()` in mixin classes.
+  - [Code examples](chapter07/_7_19_multiple_inheritance_interfaces_and_mixins.py)
+- When you use inheritance, Python builds **a linear chain of classes**, aka **Method Resolution Order (MRO)**, accessible via `<class>.__mro__`.
+  - MRO specifies the **search order** for attribute lookup.
+  - Classes are placed on the MRO list according to two ordering rules:
+    1. A **child class** must always be **checked before** any of its **parents**.
+    2. **Parents** must be **checked in the same order** as they're **written in the inheritance list** of the child.
+  - `super()` **delegates** attributes to the **next class** on the MRO.
+
+## 7.20 Type-Based Dispatch
+
+- Dispatch through a **dictionary** and **supports inheritance**.
+  ```py
+  handlers = {
+      Duck: handle_duck,
+      Trombonist: handle_trombonist,
+      Cyclist: handle_cyclist
+  }
+
+  def dispatch(obj):
+      for ty in type(obj).__mro__:  # <--
+          func = handlers.get(ty)
+          if func:
+              return func(obj)
+      raise RuntimeError(f"No handler for {obj}")
+
+  obj = SubclassCyclist()
+  dispatch(obj)  # Invoke handle_cyclist(SubclassCyclist())
+  ```
+- **(Common pattern)** Using `getattr()` to dispatch onto **methods of a class**.
+  ```py
+  # Class-based dispatch using getattr().
+  class Dispatcher:
+      def handle(self, obj):
+          for ty in type(obj).__mro__:
+              method = getattr(self, f"handle_{ty.__name__}", None)  # <--
+              if method:
+                  return method(obj)
+          raise RuntimeError(f"No handler for {obj}")
+
+      def handle_Duck(self, obj):
+          print(f"Invoked {self.handle_Duck.__name__}({obj})")
+
+      def handle_Trombonist(self, obj):
+          print(f"Invoked {self.handle_Trombonist.__name__}({obj})")
+
+      def handle_Cyclist(self, obj):
+          print(f"Invoked {self.handle_Cyclist.__name__}({obj})")
+
+
+  dispatcher = Dispatcher()
+  dispatcher.handle(Duck())
+  dispatcher.handle(Cyclist())
   ```

@@ -964,7 +964,7 @@
       x.__init__(args)
   ```
 - `__init__()` is the most common method to be implemented.
-- Use of `__new__()` almost always indicates the presence of **advanced logic** related to instance creation. E.g. to bypass `__init__()`, to implement singleton or caching.
+- Use of `__new__()` almost always indicates the presence of **advanced logic** related to instance creation. E.g. to bypass `__init__()`, to implement **singleton** or **caching**. See [Section 7.23](#723-the-object-life-cycle-and-memory-management).
 - *Ref. 1:* `__new__()` doesn't need to return an instance of the class in question. If not, the call to `__init__()` is **skipped**.
 - `__del__()` is invoked when an instance **is about to** be garbage-collected.
   - **Note:** `del <obj>` **only decrements the reference count** and doesn't necessarily result in a call to `__del__()`.
@@ -1117,7 +1117,7 @@
 - `__getattr__()`:
   - Invoked when the `__getattribute__()` can't locate the attribute.
   - **Default behavior** is to raise an `AttributeError` exception.
-- User-defined classes can define **properties** and **descriptors** for more fine-grained control of attribute access. More details in **Chapter 7**.
+- User-defined classes can define **properties** and **descriptors** for more fine-grained control of attribute access. More details in **[Section 7.25](#725-internal-object-representation-and-attribute-binding)**.
 
 ## 4.16 Function Protocol
 
@@ -1897,12 +1897,12 @@ enh_gen.close()
 
 ## 7.3 Instances
 
-- Use `vars()` to view **instance variables (attributes)**.
+- Use `vars(<obj>)` or `<obj>.__dict__` to view **instance variables (attributes)**.
   ```py
   a = Account("Guido", 1000.0)
   vars(a)  # -> {'owner': 'Guido', 'balance': 1000.0}
   ```
-- Every instance **keeps a link to its class** via its associated type.
+- Every instance **keeps a link to its class** (`__class__`) via its associated type.
   ```py
   type(a)           # -> <class 'account.Account'>
   type(a).deposit   # -> <function Account.deposit at 0x0000016165CFFE20>
@@ -2043,7 +2043,7 @@ enh_gen.close()
 
 ## 7.13 Static Methods
 
-- A class can be merely used as a **namespace** for static methods.
+- A **class** can be merely **used as a namespace** for static methods.
 - Static methods don't have the `self` or `cls` argument, there're just ordinary functions.
   ```py
   class Ops:
@@ -2206,7 +2206,7 @@ enh_gen.close()
     - All implementations of a mixin method should have an **identical/compatible function signature**.
   - Always use `super()` in mixin classes.
   - [Code examples](chapter07/_7_19_multiple_inheritance_interfaces_and_mixins.py)
-- When you use inheritance, Python builds **a linear chain of classes**, aka **Method Resolution Order (MRO)**, accessible via `<class>.__mro__`.
+- *When you use inheritance, Python builds **a linear chain of classes**, aka **Method Resolution Order (MRO)**, accessible via `<class>.__mro__`.
   - MRO specifies the **search order** for attribute lookup.
   - Classes are placed on the MRO list according to two ordering rules:
     1. A **child class** must always be **checked before** any of its **parents**.
@@ -2339,3 +2339,118 @@ enh_gen.close()
   print(p)  # Point(x=2, y=3)
   ```
 - **Issue:** Decorators **must be explicitly applied** to each class where they are used.
+
+## 7.22 Supervised Inheritance - `__init_subclass__(cls)`
+
+- A **base class** can perform extra actions on behalf of its subclasses.
+  - Use `__init_subclass__()` class methods to supervise an **entire hierarchy** of child classes.
+  ```py
+  class Base:
+      # Triggered upon the definition of any child class, even if 
+      #   the child class doesn't directly inherit `Base`.
+      @classmethod
+      def __init_subclass__(cls):
+          print("Initializing", cls)
+
+  class A(Base):  # <--
+      pass
+
+  class B(A):     # <--
+      pass
+  ```
+- Tasks commonly performed with **class decorators** can be performed with `__init_subclass__()` instead.
+- In the case of **multiple inheritance**, use `super()` to ensure all classes that implement `__init_subclass__()` get called.
+- **Use cases:** [Code examples](chapter07/_7_22_supervised_inheritance.py)
+
+## 7.23 The Object Life Cycle and Memory Management
+
+- **Two steps** in the instance creation:
+  1. Calls `__new__()` to **create** a new instance.
+  2. Then, calls `__init__()` to **initialize** the instance.
+- Except for the first argument, `__new__()` receives the **same arguments** as `__init__()`. But, the **default implementation** of `__new__()` just **ignores** them.
+- Direct use of the `__new__()` is **uncommon**, but sometimes it's used to **bypass the invocation** of the `__init__()`.
+- A class can define `__new__()` to alter some aspect of instance creation.
+  - **Use cases:** Instance caching, singletons, and immutability.
+  ```py
+  # Example: Instance caching
+  class Date:
+      _cache = {}
+
+      def __new__(cls, year, month, day):
+          self = Date._cache.get((year, month, day))
+          if not self:
+              # 1. Create an instance using object.__new__().
+              self = super().__new__(cls)
+              # 2. Initialize the instance.
+              self.year = year
+              self.month = month
+              self.day = day
+
+              Date._cache[year, month, day] = self
+
+          return self
+
+      # Every call to Date() calls __init__().
+      # This method is empty because initialization is already done in __new__().
+      def __init__(self, year, month, day):
+          pass
+
+  d = Date(2012, 12, 21)
+  e = Date(2012, 12, 21)
+  assert d is e  # Same object
+  ```
+- Instances are managed by **reference counting**. See [Section 4.3](#43-reference-counting-and-garbage-collection).
+- A class **rarely needs** to define `__del__()`.
+  - It's **dangerous** to rely on `__del__()` for a proper cleanup.
+  - Use an **explicit `close()`** and the **context manager protocol** to cleanup resources properly. [Code example 2](chapter07/_7_23_the_object_life_cycle_and_memory_management.py)
+  - Due to the **unpredictable timing** of garbage collection, `__del__()` has some **restrictions**:
+    - Any **exception** that **propagates** is printed to sys.stderr, and **can't be caught**.
+    - Should **avoid** operations such as acquiring locks or other resources. Doing so could result in a **deadlock**.
+  - If you must define `__del__()`, **keep it simple**.
+
+## 7.24 Weak References
+
+- **Instance caching** example in [Section 7.23](#723-the-object-life-cycle-and-memory-management) has one **problem**. There's no way for an instance **to ever be removed** from the cache. It will **grow indefinitely** over time.
+- One **solution** is to create a **weak reference** using the `weakref` module.
+- A weak reference creates a reference to an object **without increasing its reference count**.
+  - Use `<weakref_obj>()` to get the actual object. This will either return the referenced object or `None`.
+  ```py
+  a = Account("Guido", 1000.0)
+
+  a_ref = weakref.ref(a)
+  print(a_ref)    # <weakref at ...; to 'Account' at ...>
+  print(a_ref())  # Account('Guido', 1000.0)
+
+  del a
+  print(a_ref())  # None
+  print(a_ref)    # <weakref at ...; dead>
+  ```
+- **Use cases:** Commonly used in conjunction with **caching** ([code example](chapter07/_7_24_weak_references.py)) and **advanced memory management**.
+- Support for weak references...
+  - **Requires** instances to have a mutable `__weakref__` attribute. 
+  - Instances of **user-defined classes** normally have such an attribute **by default**. 
+  - But, **built-in types** and certain kinds of special data structures (**named tuples**, **classes with slots**) do not. You have to define a **subclass** for those types in order to use weak references.
+
+## 7.25 Internal Object Representation and Attribute Binding
+
+- **Modifications** to an instance are reflected in the `__dict__` attribute. Likewise, modifications to `__dict__` are reflected in the attributes.
+- Instances are **linked back to their class** by `__class__` attribute.
+- A class is just **a thin layer over a dictionary** - `<class>.__dict__`.
+- Classes are linked to their **base classes** by `__bases__` attribute (tuple). This is **only informational**. The **runtime implementation of inheritance** uses the `__mro__` attribute, see [Section 7.19](#719-multiple-inheritance-interfaces-and-mixins).
+- A class that reimplements **attribute protocols** ([Section 4.15](#415-attribute-protocol)) **should rely** upon the default implementation provided by **`super()`** to carry out the actual work of manipulating an attribute. `super()` takes care of the features of classes such as **descriptors** and **properties**.
+  ```py
+  # Reimplement __setattr__
+  class Account:
+      def __init__(self, owner, balance):
+          self.owner = owner
+          self.balance = balance
+
+      def __setattr__(self, name, value):
+          if name not in {"owner", "balance"}:
+              raise AttributeError(f"No attribute {name}")
+          super().__setattr__(name, value)  # <--
+
+  acct = Account("Guido", 1000.0)
+  acct.balance = 940.25
+  acct.amount = 540.2  # Raise AttributeError: No attribute amount
+  ```

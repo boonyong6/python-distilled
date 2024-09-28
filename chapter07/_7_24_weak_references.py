@@ -3,7 +3,7 @@ import weakref
 
 a = Account("Guido", 1000.0)
 
-# Referencing `a`` with weakref doesn't increase the reference count.
+# Referencing `a` with weakref doesn't increase the reference count.
 a_ref = weakref.ref(a)
 print(a_ref)    # <weakref at 0x0000017C6ED058A0; to 'Account' at 0x0000017C6EB77D60>
 print(a_ref())  # Account('Guido', 1000.0)

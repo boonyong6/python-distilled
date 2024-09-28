@@ -1117,7 +1117,8 @@
 - `__getattr__()`:
   - Invoked when the `__getattribute__()` can't locate the attribute.
   - **Default behavior** is to raise an `AttributeError` exception.
-- User-defined classes can define **properties** and **descriptors** for more fine-grained control of attribute access. More details in **[Section 7.25](#725-internal-object-representation-and-attribute-binding)**.
+  - **Use case:** Proxy object, alternative to inheritance. See [Section 7.26](#726-proxies-wrappers-and-delegation).
+- User-defined classes can define **properties** and **descriptors** for more fine-grained control of attribute access. More details in [Section 7.25](#725-internal-object-representation-and-attribute-binding).
 
 ## 4.16 Function Protocol
 
@@ -2207,7 +2208,7 @@ enh_gen.close()
   - Always use `super()` in mixin classes.
   - [Code examples](chapter07/_7_19_multiple_inheritance_interfaces_and_mixins.py)
 - *When you use inheritance, Python builds **a linear chain of classes**, aka **Method Resolution Order (MRO)**, accessible via `<class>.__mro__`.
-  - MRO specifies the **search order** for attribute lookup.
+  - MRO specifies the **search order** for **attribute lookup**.
   - Classes are placed on the MRO list according to two ordering rules:
     1. A **child class** must always be **checked before** any of its **parents**.
     2. **Parents** must be **checked in the same order** as they're **written in the inheritance list** of the child.
@@ -2454,3 +2455,62 @@ enh_gen.close()
   acct.balance = 940.25
   acct.amount = 540.2  # Raise AttributeError: No attribute amount
   ```
+
+## 7.26 Proxies, Wrappers, and Delegation
+
+- A class can implement a **wrapper** layer around another object to create a **proxy object**.
+- A proxy object exposes the **same interface** as another object (**not via inheritance**).
+- A common implementation technique for proxies involves the `__getattr__()`.
+  - **Does not** apply to operations mapped to **special methods** such as `__len__()`, `__getitem__()`, and so on.
+  ```py
+  class ListLike:
+      def __init__(self):
+          self._items = list()
+
+      def __getattr__(self, name):  # <--
+          return getattr(self._items, name)  # Delegate to `_items`.
+  
+  x = ListLike()
+  len(x)  # Fails. No __len__() method.
+  ```
+- **Use case:** Sometimes used as an **alternative to inheritance**.
+
+## 7.27 Reducing Memory Use with `__slots__`
+
+- **Use case:** When you have to create a **large number** of instances.
+- Instance attribute names **must be fixed**, and specify the names in a **special class variable** called `__slots__`.
+  ```py
+  class Account:
+      # Specify only instance attributes (names that would appear in the instance's __dict__), not methods, properties, or class variables.
+      __slots__ = ("owner", "balance")
+      ...
+  ```
+- Slots is a **definition hint** for **performance optimizations** on both memory use and execution speed.
+- **No longer use** a dictionary for storing instance data.
+- Slots has a **tricky interaction with inheritance**.
+  - If a class inherits from a base class that uses `__slots__`, it also needs to define `__slots__` for storing its own attributes (even if it doesn't add any).
+  - **Otherwise**, the subclass will **run slower** and **use even more memory**.
+- Slots is **incompatible with multiple inheritance**.
+- Using slots can **break code** that expects instances to have an underlying `__dict__` attribute, such as in utility libraries.
+
+## 7.28 Descriptors
+
+- **Property** is actually implemented using a **lower-level construct** known as **descriptor**.
+- Can only be **instantiated** at the **class level**.
+- `__set_name__()` is invoked **after a class has been defined**, but **before any instances have been created**.
+- If `__get__()` is invoked at the **class level**, the `instance` argument is `None`. E.g. `Account.balance`.
+- **Method descriptor**
+  - Only implements `__get__()`.
+  - Only gets invoked if there is **no matching entry** in the **instance dictionary**.
+  - It's used to implement Python's various types of methods, such as **instance methods**, **class methods**, and **static methods**.
+- [Code examples](chapter07/_7_28_descriptors.py)
+
+## 7.29 Class Definition Process
+
+- When you define a class, a **dictionary** is created that serves as the **local class namespace**. The body of the class then **executes as a script** within this namespace.
+- Use `locals()` within the **class body** to get its **class namespace**.
+- **Any** Python statement is allowed in the body of a class, including **control flow**, **imports**, **nested classes**, and so on.
+- **Predefined strings** in a class:
+  - `__qualname__` - class name
+  - `__module__` - enclosing module
+- **Key takeaway:** You can put anything you want in a class.

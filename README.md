@@ -808,7 +808,7 @@
   assert test [, msg]
   ```
 - Won't be executed if Python is run in **optimized mode**.
-- Primarily used to check invariants that should always be true. Else, it indicates a bug.
+- **Use case:** To check invariants that should always be true. Else, it indicates a bug.
   ```py
   # Assuming n is always valid.
   def factorial(n):
@@ -2481,7 +2481,8 @@ enh_gen.close()
 - Instance attribute names **must be fixed**, and specify the names in a **special class variable** called `__slots__`.
   ```py
   class Account:
-      # Specify only instance attributes (names that would appear in the instance's __dict__), not methods, properties, or class variables.
+      # Specify only instance attributes (names that would appear in 
+      #   the instance's __dict__), not methods, properties, or class variables.
       __slots__ = ("owner", "balance")
       ...
   ```
@@ -2514,3 +2515,79 @@ enh_gen.close()
   - `__qualname__` - class name
   - `__module__` - enclosing module
 - **Key takeaway:** You can put anything you want in a class.
+
+## 7.30 Dynamic Class Creation - `types.new_class()`
+
+- Use a **dictionary** and **`types.new_class()`** to create a class dynamically.
+  ```py
+  import types
+
+  def __init__(self, owner, balance):
+      self.owner = owner
+      self.balance = balance
+
+  def deposit(self, amount):
+      self.balance += amount
+
+  methods = {"__init__": __init__, "deposit": deposit}  # <--
+
+  # `exec_body` callback responsible for populating the class namespace.
+  Account = types.new_class(
+      "Account", (), exec_body=lambda ns: ns.update(methods))  # <--
+  ```
+- **Use case:** To create classes **from data structures** (data-driven).
+  - **Assumption:** Code for defining those classes is **repetitive**.
+  ```py
+  typed_classes = [
+      ("Integer", int),
+      ("Float", float),
+      ("String", str),
+  ]
+
+  def create_class(name, ty):
+      return types.new_class(
+          name, (Typed,), exec_body=lambda ns: ns.update(expected_type=ty)
+      )
+
+  globals().update((name, create_class(name, ty)) for name, ty in typed_classes)
+  ```
+- `type()` can also dynamically create a class. **But**, it **doesn't take into account** some of the more advanced class machinery such as metaclasses. So, in modern code, **use `types.new_class()` instead**.
+
+## 7.31 Metaclasses
+
+- When a class is defined, it **becomes an object**.
+- A metaclass is a class that creates class objects.
+- `type` is the **default metaclass**.
+  ```py
+  # `Account` is an instance of `type`.
+  print(Account.__class__)  # Same as, type(Account)
+  ```
+- Steps to create a **class object**:
+  1. Create a namespace for the class.
+  2. Execute the class body in the created namespace.
+  3. Create the class object using a class name, base classes, and populated namespace.
+- A class can use a different metaclass to customize the class definition process.
+  ```py
+  class Account(metaclass=SlotsMeta):
+      ...
+  ```
+- If the metaclass is **not specified explicitly** in the class definition, the class uses the metaclass used by its **first base class**.
+- To create a metaclass, define a class that inherits from `type`.
+- **Special methods** of the metaclass that can be redefined:
+  Method | Description
+  -------|------------
+  `__prepare__(metacls, cls_name, bases)` | To create the class namespace.
+  `__new__(metacls, cls_name, bases, namespace)` | To create the class object.
+  `__init__(cls, cls_name, bases, namespace)` | Called after a class has been created.
+  `__call__(cls, *args, **kwargs)` | To create new instances of the class.
+- Use metaclasses as a **last resort**. Prefer to use `__init_subclass__()`, class decorators, properties, descriptors, mixins, and so on.
+- **Use case:** When you want to apply **extreme low-level control** over the class definition environment and creation process.
+  - **Example:** Rewrite the contents of the class namespace. Certain features of classes are established at definition time and can't be modified later, such as `__slots__`. See [code example 2](chapter07/_7_31_metaclasses.py).
+- Metaclass feature is mainly used by framework builders.
+
+## 7.32 Built-in Objects for Instances and Classes
+
+- Commonly used attributes of a **type (class)**.
+  ![7-1-attributes-of-types](images/7-1-attributes-of-types.png)
+- Special attributes of an **instance**.
+  ![7-2-instance-attributes](images/7-2-instance-attributes.png)

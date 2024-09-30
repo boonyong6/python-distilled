@@ -1967,7 +1967,7 @@ enh_gen.close()
 ## 7.7 Inheritance
 
 - Inheritance is specified with **a comma-separated list** of base-class names.
-  - Python supports multiple inheritance, see [Section 7.19](#todo).
+  - Python supports multiple inheritance, see [Section 7.19](#719-multiple-inheritance-interfaces-and-mixins).
 - If there is **no specified base class**, a class **implicitly inherits** from `object`.
 - `object` class is the **root** of all Python objects. It provides the **default implementation** of methods such as `__str__()` and `__repr__()`.
 - **Use cases:**
@@ -2301,7 +2301,7 @@ enh_gen.close()
           return "Pedaling"
   ```
 - **Create** new code using `exec()` or `@dataclass`.
-  - **Downside:** Poor startup performance. `exec()` bypasses the **compilation optimizations** that Python applies to **modules**, slowing down the importing of your code. 
+  - **Downside:** Poor startup performance. `exec()` bypasses the **compilation optimizations** ([Section 8.6](#86-module-compilation)) that Python applies to **modules**, slowing down the importing of your code. 
   ```py
   # Example: Using exec()
   import inspect
@@ -2591,3 +2591,128 @@ enh_gen.close()
   ![7-1-attributes-of-types](images/7-1-attributes-of-types.png)
 - Special attributes of an **instance**.
   ![7-2-instance-attributes](images/7-2-instance-attributes.png)
+
+# 8 Modules and Packages
+
+## 8.1 Modules and the `import` Statement
+
+- `import` locates modules by searching the directories in `sys.path`.
+- `import` executes **all** of the statements in the loaded source file (`<filename>.py`).
+- To import **multiple modules**:
+  ```py
+  import socket, os, re  # Comma-separated
+  ```
+- **Aliasing** (`as` qualifier) a module can be useful for 
+  - Managing **different implementations** of common functionality.
+  - Writing extensible programs.
+  ```py
+  # Example: Selective import
+  if platform == "unix":
+      import unix_module as module
+  elif platform == "windows":
+      import win_module as module
+  
+  r = module.func()
+  ```
+
+## 8.2 Module Caching
+
+- A module is loaded and executed **only once**.
+- **Cache** can be found in `sys.modules`.
+  - Used to determine whether `import` loads a **fresh copy** of a module or not.
+  - While **deleting a module from the cache** will force it to **reload**, this is **unsafe**. More details in [Section 8.5](#85-module-reloading-and-unloading).
+- **(Less common)** `import` inside a function:
+  ```py
+  # Use case: Only sensible if you have a specialized function that's rarely invoked, to speed up program loading.
+  def f(x):
+      import math
+      return math.sin(x) + math.cos(x)
+  ```
+
+## 8.3 Importing Selected Names from a Module
+
+- `from <module> import <name>` 
+  - **Load specific definitions** into the **current namespace**.
+    ```py
+    from module import func, SomeClass  # Comma-separated
+    ```
+  - Perform a **name copy** from the **module cache** to the local namespace (`import module` is first **executed behind the scenes**).
+  - **Entire module** is loaded and stored in the cache, same as `import <module>`.
+- **Confusion** concerns the behavior of global variables.
+  - The import **associates the local name** `a` with the original object `module.a`.
+  - Use `import <module>` to make variables **behave like global variables**. E.g. `module.a`.
+  ```py
+  # Example: `a` is a reference to `module.a`.
+  from module import a, func
+
+  # Reassigning `a` changes its reference to the new value. 
+  #   The `module.a` value remains unchanged.
+  a = 42
+  func()      # "func says that a is 37"
+  print(a)    # 42
+
+
+  # Example: Mutable global parameter - `module.a`
+  import module
+
+  module.a = 42
+  func()      # "func says that a is 42"
+  ```
+- To load **all the definitions** (*):
+  - **Illegal** to use inside a **function body**.
+  - A module can define `__all__` attribute to control the set of names imported by `*`. E.g. `__all__ = ["func", "SomeClass"]`
+  - Useful in **interactive mode**.
+  - **Not recommended** for use in **programs**. Overuse can pollute the local namespace and lead to confusion.
+  ```py
+  from module import *
+  ```
+
+## 8.4 Circular Imports
+
+- **Don't cause** Python to **deadlock**.
+- Always suggests a problem in code organization.
+
+## 8.5 Module Reloading and Unloading
+
+- **No reliable support** as module reloading is **NEVER safe**.
+- Remove a module from `sys.modules` doesn't unload a module from **memory**.
+- Module references exist in many places makes it generally impractical to reload a module.
+- `importlib` module has a `reload()` for reloading a module.
+  - Works by executing the module **on top of the existing module namespace** (without clearing the previous namespace). Same as typing new source code on top of the old code.
+  - **Caveats:**
+    - Not recursive.
+    - If the module to be reloaded is imported via `from <module> import <name>`, the effect of the reload will not be reflected.
+    - `reload()` doesn't update the underlying class definition of **existing instances**. You'll now have two **different definitions** of the same class.
+- C/C++ extensions to Python **can't be safely** unloaded or reloaded.
+
+## 8.6 Module Compilation
+
+- When modules are **first imported**, they are compiled into an **interpreter bytecode** (`.pyc` files in `__pycache__` directory).
+- `.pyc` files are regenerated if the original source code changes.
+- In **deploying** or **packaging** a Python application, it may be advantageous to **include the compiled bytecode**, as that may **speed up program startup**.
+- Dynamic code generation (e.g. `@dataclass`) and `exec()` defeat the benefits of bytecode caching (None of the generated code is cached).
+
+## 8.7 The Module Search Path
+
+- **First entry** in `sys.path` (empty string `''`) refers to the **current working directory**.
+- **ZIP** file is a way to **bundle** a collection of modules into a single file.
+  - **Specific locations** within the `.zip` file can be used for the path.
+  - **Not necessary** for a ZIP file to have a `.zip` file suffix.
+  ```py
+  import sys
+
+  sys.path.append("my_modules.zip")
+  # sys.path.append("my_modules.zip/lib")  # <--
+  import foo, bar
+  ```
+
+## 8.8 Execution as the Main Program
+
+- **Top-level module** of the interpreter is named `__main__`.
+- Execute when the module is used as the **main program**.
+  ```py
+  if __name__ == "__main__":
+      ...
+  ```
+- Source files intended for use as **libraries** can use this technique **to include optional testing or example code**.
+- You can execute the **directory** or **ZIP archive** if it contains a `__main__.py`.

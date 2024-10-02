@@ -2623,7 +2623,8 @@ enh_gen.close()
   - While **deleting a module from the cache** will force it to **reload**, this is **unsafe**. More details in [Section 8.5](#85-module-reloading-and-unloading).
 - **(Less common)** `import` inside a function:
   ```py
-  # Use case: Only sensible if you have a specialized function that's rarely invoked, to speed up program loading.
+  # Use case: Only sensible if you have a specialized function that's 
+  #   rarely invoked, to speed up program loading.
   def f(x):
       import math
       return math.sin(x) + math.cos(x)
@@ -2676,7 +2677,7 @@ enh_gen.close()
 
 - **No reliable support** as module reloading is **NEVER safe**.
 - Remove a module from `sys.modules` doesn't unload a module from **memory**.
-- Module references exist in many places makes it generally impractical to reload a module.
+- **Module references** exist in many places makes it generally **impractical** to reload a module.
 - `importlib` module has a `reload()` for reloading a module.
   - Works by executing the module **on top of the existing module namespace** (without clearing the previous namespace). Same as typing new source code on top of the old code.
   - **Caveats:**
@@ -2692,7 +2693,7 @@ enh_gen.close()
 - In **deploying** or **packaging** a Python application, it may be advantageous to **include the compiled bytecode**, as that may **speed up program startup**.
 - Dynamic code generation (e.g. `@dataclass`) and `exec()` defeat the benefits of bytecode caching (None of the generated code is cached).
 
-## 8.7 The Module Search Path
+## 8.7 The Module Search Path - `sys.path`
 
 - **First entry** in `sys.path` (empty string `''`) refers to the **current working directory**.
 - **ZIP** file is a way to **bundle** a collection of modules into a single file.
@@ -2706,7 +2707,7 @@ enh_gen.close()
   import foo, bar
   ```
 
-## 8.8 Execution as the Main Program
+## 8.8 Execution as the Main Program - `__main__`
 
 - **Top-level module** of the interpreter is named `__main__`.
 - Execute when the module is used as the **main program**.
@@ -2716,3 +2717,165 @@ enh_gen.close()
   ```
 - Source files intended for use as **libraries** can use this technique **to include optional testing or example code**.
 - You can execute the **directory** or **ZIP archive** if it contains a `__main__.py`.
+
+## 8.9 Packages
+
+- A package is defined by **creating a directory** and placing an initially empty **`__init__.py` file** in that directory.
+- Whenever **any part** of a package is **first imported**, code in the **`__init__.py` file executes first**.
+  - `__init__.py` can contain code to perform **package-specific initialization**.
+  - If importing a **nested submodule**, all `__init__.py` files encountered in traversal of the directory structure are executed.
+- A directory with a missing `__init__.py` file defines a **different kind of package** known as **namespace package** (advanced feature).
+- **In most cases**, the `__init__.py` file **is all you need**.
+
+## 8.10 Imports Within a Package
+
+- **Fully qualified import:**
+  ```py
+  from graphics.primitive import lines
+  ```
+- **Package-relative import:**
+  - Can specify **submodules** contained in **different directories**. See **example 2**.
+  - Can only be specified using the `from <module> import <symbol>`.
+  - Can only be used from **within a package**.
+  ```py
+  # (NOTE) Module to be imported: 
+  #   graphics/primitives/lines.py
+  
+  # Example 1: `.` refers to the same directory.
+  # In graphics/primitives/fill.py
+  from . import lines
+  
+  # Example 2: `..` moves up one directory level.
+  # In graphics/graph2d/plot2d.py
+  from ..primitives import lines
+  ```
+
+## 8.11 Running a Package Submodule as a Script
+
+- Modules in a package...
+  - Has a **different runtime environment** than a simple module. 
+  - There is an **enclosing package name**, **submodules**, and the use of **relative imports**.
+  - So, they **can't be run directly** by Python like `python3 graphics/graph2d/plot2d.py`.
+- Use `-m` option to run a submodule.
+  ```bash
+  python3 -m graphics.graph2d.plot2d
+  ```
+- Many **built-in packages** have **"secret" features** that can be used via `-m`, such as `python3 -m http.server`.
+
+## 8.12 Controlling the Package Namespace
+
+- **Primary purpose of a package** is to serve as a **top-level container** for code.
+- Simply importing a package doesn't make **any other part** accessible (**unless** the `__init__.py` is set up correctly).
+  ```py
+  import graphics  # Only `graphics/__init__.py` is imported.
+
+  graphics.primitive.fill.flood_fill()  # Fails
+  ```
+- **Primary purpose of an `__init__.py`** is to manage the **contents** of the **top-level package namespace**, such as importing selected functions, classes, and other objects from **lower-level submodules**.
+  ```py
+  # In `graphics/__init__.py`
+  
+  # Imported names appear under the `graphics` namespace.
+  from .graph2d.plot2d import Plot2D
+  from .graph3d.plot3d import Plot3D
+  from . import primitive  # Managed by `graphics/primitive/__init__.py`.
+  ```
+
+## 8.13 Controlling Package Exports
+
+- Package submodules often declare an **explicit list of exports** by defining an `__all__` variable.
+  - Every component of a package explicitly **states its exports** using the `__all__` variable.
+  - `__init__.py` then **propagate** the exports upwards.
+  ```py
+  # In `graphics/graph2d/plot2d.py`
+  __all__ = ["Plot2D"]  # <--
+
+  class Plot2D:
+      ...
+
+
+  # In `graphics/graph2d/__init__.py`
+  from .plot2d import *
+
+  # Propagate the __all__ up to next level (if desired)
+  __all__ = plot2d.__all__
+  ```
+- Although it is not recommended to use **\* imports** in programs, it is **common practice in package** `__init__.py` files.
+
+## 8.14 Package Data
+
+- Packages **can contain data files** that need to be loaded, such as **configuration data**.
+- To read package data **within a package**, use `pkgutil.get_data(<package>, <resource>)`.
+  ```py
+  import pkgutil
+  import json
+
+  def func():
+      raw_data = pkgutil.get_data(
+          __package__, "resources/data.json")  # <--
+
+      text_data = raw_data.decode("utf-8")
+      data = json.loads(text_data)
+      print(data)
+  ```
+- A package is **not a good place** to store **giant data files**.
+
+## 8.15 Module Objects
+
+- Common module attributes:
+  ![8-1-module-attributes](images/8-1-module-attributes.png)
+- `__dict__` attribute represents the **module namespace**.
+- **Not all** attributes are available on all modules.
+  - **Built-in modules** may not have a `__file__` attribute.
+  - **Package-related attributes** are not set for modules that are not contained in a package.
+
+## 8.16 Deploying Python Packages
+
+- **Reference:** https://packaging.python.org/tutorials/packaging-projects
+- The most important thing is to **keep your code isolated** as self-contained project.
+- All of your code should live in a proper package.
+- The most **minimalistic way** to distribute code is to use the `setuptools` module or `distutils` module.
+  - **Larger projects** may involve C/C++ extensions, complicated package structures, and more.
+- Example of using `setuptools`:
+  - `setup()` supports **other parameters** that supply various **metadata**.
+  - Creating a `setup.py` file is **enough** to create a **source distribution** of your software.
+  ```py
+  # Project structure:
+  #
+  # spam-project/
+  #     README.md
+  #     Documentation.txt
+  #     spam/
+  #         __init__.py
+  #         foo.py
+  #         bar.py
+  #     runspam.py
+
+
+  # setup.py
+  
+  from setuptools import setup
+
+  setup(
+      name="spam",  # Package name
+      version="0.0",
+      packages=["spam"],  # A list of all package directories.
+      scripts=["runspam.py"],
+  )
+
+  # To create a source distribution (spam-0.0.tar.gz):
+  #   python3 setup.py sdist
+
+  # To install:
+  #   python3 -m pip install spam-1.0.tar.gz
+  ```
+
+## 8.17 Start with a Package
+
+- Start all programs as a package.
+  ```
+  program/
+      __init__.py
+      __main__.py
+  ```
+- One advantage of using a package is that **all of your code remains isolated**.

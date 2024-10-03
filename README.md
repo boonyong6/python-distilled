@@ -2832,6 +2832,8 @@ enh_gen.close()
 ## 8.16 Deploying Python Packages
 
 - **Reference:** https://packaging.python.org/tutorials/packaging-projects
+  - **Code example** in chapter08/_8_16_deploying_python_packages/packaging_tutorial/
+  - The example uses the **`hatchling` build backend** and **`twine`** to **upload packages** to PyPI.
 - The most important thing is to **keep your code isolated** as self-contained project.
 - All of your code should live in a proper package.
 - The most **minimalistic way** to distribute code is to use the `setuptools` module or `distutils` module.
@@ -2879,3 +2881,184 @@ enh_gen.close()
       __main__.py
   ```
 - One advantage of using a package is that **all of your code remains isolated**.
+
+# 9 Input and Output
+
+## 9.1 Data Representation
+
+- **At the lowest level**, Python works with two datatypes:
+  1. ***bytes*** - Raw uninterpreted data
+  2. ***text*** - Unicode characters
+- Two built-in **types for *bytes***:
+  1. `bytes` - **Immutable** string of integer byte values.
+      ```py
+      a = b"hello"        # Immutable string
+      print(a[0])         # Print 104 (integer byte value)
+      print(type(a[0]))   # Print <class 'int'>
+      ```
+  2. `bytearray` 
+      - **Mutable** byte array that behaves as a combination of a byte string and a list.
+      - **Use case:** For building up groups of bytes in an incremental manner (assembling data from fragments).
+      ```py
+      c = bytearray()
+      c.extend(b"world")
+      c.append(0x21)
+      print(c)  # Print bytearray(b'world!')
+      ```
+- **Accessing individual elements** of `byte` and `bytearray` objects produces **integer byte values** (different from text strings).
+- **No implicit conversion** between the ***bytes*** and ***text***.
+- When performing I/O, make sure you're working with the right datatypes.
+
+## 9.2 Text Encoding and Decoding
+
+- When working with text, data read from input must be decoded and data written to output must be encoded.
+  ```py
+  output = "hello"
+  encoded_output = output.encode("utf-8")  # Encode to bytes.
+
+  input_var = b"world"
+  decoded_input = input_var.decode("utf-8")  # Decode to text.
+  ```
+- Common encodings:
+  ![9-1-common-encodings](images/9-1-common-encodings.png)
+- `encode()` and `decode()` accept an optional **`errors` argument** that specifies the **encoding error behavior**.
+  - `surrogateescape` option allows data that doesn't follow the expected encoding rules to **survive a roundtrip** decoding/encoding cycle.
+
+  ![9-2-error-handling-options](images/9-2-error-handling-options.png)
+
+## 9.3 Text and Byte Formatting
+
+- Use `format()` to format a **single value**.
+  ```py
+  x = 123.456
+  format(x, "0.2f")     # "123.46"
+  format(x, "10.4f")    # "  123.4560"
+  format(x, "*<10.2f")  # "****123.46"
+  #          ^ Format specifier
+  ```
+- **Format specifier syntax:** `[fill[align]][sign][0][width][,][.precision][type]`
+  ```py
+  # Example:
+  #   fill        : *
+  #   align       : <, >, ^ (centered)
+  #   width       : 10
+  name = "Elwood"
+  format(name, "<10")   # "Elwood    "
+  format(name, ">10")   # "    Elwood"
+  format(name, "^10")   # "  Elwood  "
+  format(name, "*^10")  # "**Elwood**"
+  ```
+- `type` specifier (format codes):
+  ![9-3-format-codes](images/9-3-format-codes.png)
+  ```py
+  # Example:
+  #   width       : 16
+  #   ,           : Use thousand separator
+  #   precision   : .2
+  #   type        : f (floating point)
+  x = 123456.78
+  format(x, "16,.2f")   # "      123,456.78"
+  ```
+- Format **numbers**:
+  ```py
+  # Example:
+  #   width       : [0]10
+  #   type        : d, x, b
+  x = 42
+  format(x, "10d")     # "        42"
+  format(x, "10x")     # "        2a"
+  format(x, "10b")     # "    101010"
+  format(x, "010b")    # "0000101010"
+
+  # Example:
+  #   sign        : +
+  #   width       : [0]10
+  #   precision   : .2
+  #   type        : f, e, %
+  y = 3.1415926
+  format(y, "10.2f")    # "      3.14"
+  format(y, "10.2e")    # "  3.14e+00"
+  format(y, "+10.2f")   # "     +3.14"
+  format(y, "+010.2f")  # "+000003.14"
+  format(y, "+10.2%")   # "  +314.16%"
+  ```
+- Use **f-strings** for **complex** string formatting - `{<expr>:<spec>}`.
+  ```py
+  # Example:
+  x = 123.456
+  f"Value is {x:0.2f}"          # "Value is 123.46"
+  f"Value is {x:10.4f}"         # "Value is   123.4560"
+  f"Value is {2 * x:*<10.2f}"   # "Value is 246.91****"
+
+  # Example: 
+  #   Parts of the format specifier can be supplied by other expressions.
+  y = 3.1415926
+  width = 8
+  precision = 3
+  f"{y:{width}.{precision}f}"   # "   3.142"
+
+  # Example: 
+  #   End <expr> by `=` to include the literal text of <expr> in the result.
+  x = 123.456
+  print(f"{x=:0.2f}")         # "x=123.46"
+  print(f"{2 * x=:0.2f}")     # "2 * x=246.91"
+
+  # Example: 
+  #   Formatting with `!r` or `!s`.
+  f"{x!r:<spec>}"  # Calls repr(x).__format__("spec")
+  f"{x!s:<spec>}"  # Calls str(x).__format__("spec")
+  ```
+- `.format()` method of strings (alternative to f-strings) - `{<arg>:<spec>}`
+  - Unlike f-strings, `<arg>` **can't be an expression**.
+  ```py
+  # Example:
+  x = 123.456
+  "Value is {:0.2f}".format(x)            # "Value is 123.46
+  "Value is {0:10.2f}".format(x)          # "Value is     123.46
+  "Value is {val:*<10.2f}".format(val=x)  # "Value is 123.46****
+
+  # Example:
+  #   If <arg> is omitted, arguments are taken in order.
+  name = "IBM"
+  shares = 50
+  price = 490.1
+  "{:>10s} {:10d} {:10.2f}".format(name, shares, price)
+
+  # Example:
+  #   <arg> can refer to a specific argument number or name.
+  tag = "p"
+  text = "hello world"
+  "<{0}>{1}</{0}>".format(tag, text)  # <p>hello world</p>
+  "<{tag}>{text}</{tag}>".format(tag=tag, text=text)
+
+  # Example:
+  #   Attribute lookup, indexing, and nested substitutions.
+  d = {
+      "name": "IBM",
+      "shares": 50,
+      "price": 490.1
+  }
+  "{0[shares]:d} shares of {0[name]} at {0[price]:0.2f}".format(d)
+  ```
+- Format `bytes` and `bytearray` using the `%` operator.
+  - Sequences of the `%<spec>` are replaced in order with **values from a tuple**.
+  ```py
+  # Example:
+  name = b"ACME"
+  x = 123.456
+
+  b'Value is %0.2f' % x             # b'Value is 123.46'
+  bytearray(b"Value is %0.2f") % x  # bytearray(b'Value is 123.46')
+  b"%s = %0.2f" % (name, x)         # b'ACME = 123.46
+
+  # Example:
+  #   Use `-` to adjust alignment.
+  b"%10.2f" % x   # b'    123.46'
+  b"%-10.2f" % x  # b'123.46    '
+
+  # Example:
+  #   When working with bytes, text strings are not supported.
+  name = "Dave"
+  b"Hello %s" % name                  # Raise TypeError
+  b"Hello %s" % name.encode("utf-8")  # Ok
+  ```

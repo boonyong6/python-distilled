@@ -82,17 +82,17 @@ print("Value is {:0.2f}".format(x))             # "Value is 123.46
 print("Value is {0:10.2f}".format(x))           # "Value is     123.46
 print("Value is {val:*<10.2f}".format(val=x))   # "Value is 123.46****
 print()
-#   If `arg` is omitted, arguments are taken in order.
+#   If <arg> is omitted, arguments are taken in order.
 name = "IBM"
 shares = 50
 price = 490.1
 print("{:>10s} {:10d} {:10.2f}".format(name, shares, price))
-#   `arg` can refer to a specific argument number or name.
+#   <arg> can refer to a specific argument number or name.
 tag = "p"
 text = "hello world"
 print("<{0}>{1}</{0}>".format(tag, text))
 print("<{tag}>{text}</{tag}>".format(tag=tag, text=text))
-#   `arg` can't be an arbitrary expression. But, `format()` can perform 
+#   <arg> can't be an arbitrary expression. But, `format()` can perform 
 #     limited attribute lookup, indexing, and nested substitutions.
 d = {
     "name": "IBM",

@@ -1,0 +1,6 @@
+A file using \n as newline character.
+A file for testing.
+
+
+Used in chapter 9.
+Test read from file.

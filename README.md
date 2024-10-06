@@ -2922,7 +2922,7 @@ enh_gen.close()
 - Common encodings:
   ![9-1-common-encodings](images/9-1-common-encodings.png)
 - `encode()` and `decode()` accept an optional **`errors` argument** that specifies the **encoding error behavior**.
-  - `surrogateescape` option allows data that doesn't follow the expected encoding rules to **survive a roundtrip** decoding/encoding cycle.
+  - `surrogateescape` option allows data that **doesn't follow** the expected encoding rules to **survive a roundtrip** decoding/encoding cycle.
 
   ![9-2-error-handling-options](images/9-2-error-handling-options.png)
 
@@ -3041,7 +3041,7 @@ enh_gen.close()
   "{0[shares]:d} shares of {0[name]} at {0[price]:0.2f}".format(d)
   ```
 - Format `bytes` and `bytearray` using the `%` operator.
-  - Sequences of the `%<spec>` are replaced in order with **values from a tuple**.
+  - Ref. 1: Sequences of the `%<spec>` are replaced in order with **values from a tuple**. 
   ```py
   # Example:
   name = b"ACME"
@@ -3049,7 +3049,7 @@ enh_gen.close()
 
   b'Value is %0.2f' % x             # b'Value is 123.46'
   bytearray(b"Value is %0.2f") % x  # bytearray(b'Value is 123.46')
-  b"%s = %0.2f" % (name, x)         # b'ACME = 123.46
+  b"%s = %0.2f" % (name, x)         # b'ACME = 123.46 (Ref. 1)
 
   # Example:
   #   Use `-` to adjust alignment.
@@ -3062,3 +3062,220 @@ enh_gen.close()
   b"Hello %s" % name                  # Raise TypeError
   b"Hello %s" % name.encode("utf-8")  # Ok
   ```
+
+## 9.4 Reading Command-Line Options
+
+- Command-line options are placed in the list `sys.argv` as text strings.
+- For better **code organization** and **testing**, it's a good idea to write a **dedicated `main()`**.
+- `sys.argv[0]` contains the name of the script.
+- Writing a **help message** and **raising `SystemExit`** is a **standard practice** for command-line scripts to report an error.
+  ```py
+  # Example: Manually process command-line arguments in a simple script.
+  def main_1(argv):
+      if len(argv) != 3:
+          raise SystemExit(
+              f"Usage: python {argv[0]} input_file output_file\n") # <--
+      input_file = argv[1]
+      output_file = argv[2]
+
+  if __name__ == "__main__":
+      import sys
+      main_1(sys.argv)
+  ```
+- Use `argparse` module for more **complicated** command-line handling.
+  ```py
+  # Example: A more complicated command-line handling.
+  import argparse
+
+  def main_2(argv):
+      arg_parser = argparse.ArgumentParser(description="This is some program.")
+
+      # A positional argument.
+      arg_parser.add_argument("in_file")
+
+      # An option taking an argument.
+      arg_parser.add_argument("-o", "--output", action="store")
+
+      # An option that sets a Boolean flag.
+      arg_parser.add_argument("-d", "--debug", action="store_true", default=False)
+
+      # Parse the command line.
+      args = arg_parser.parse_args(args=argv)
+
+      # Retrieve the option settings.
+      in_file = args.in_file
+      output = args.output
+      debug_mode = args.debug
+
+      print(in_file, output, debug_mode)
+
+  if __name__ == "__main__":
+      import sys
+      main_2(sys.argv[1:])
+  ```
+- Command-line options could be passed in **invalid text encoding**. Such arguments will be encoded using the `surrogateescape` error handling ([Section 9.2](#92-text-encoding-and-decoding)).
+
+## 9.5 Environment Variables
+
+- Accessed as **text strings** in the mapping `os.environ`.
+  ```py
+  import os
+
+  path = os.environ["PATH"]  # Raise `KeyError` if the key is not found.
+  user = os.environ.get("USER")  # Return `None` if the key is not found.
+
+  os.environ["NAME"] = "VALUE"  # Modify or set the environment variable.
+  ```
+
+## 9.6 Files and File Objects
+
+- Use `open()` to open a file.
+- Often used **in combination** with the `with` statement.
+- **Common usage patterns** of working with files:
+  ```py
+  # Read a text file all at once as string.
+  with open("filename.txt", "rt") as file:
+      data = file.read()
+
+  # Read a file line-by-line.
+  with open("filename.txt", "rt") as file:
+      for line in file:
+          ...
+
+  # Write to a text file.
+  with open("out.txt", "wt") as file:
+      file.write("Some output\n")
+      print("More output", file=file)  # Write via print().
+  ```
+- Commonly used **file modes**:
+  ```py
+  open("name.txt")        # Text mode read (default: rt).
+  open("name.txt", "rt")  # Same as default.
+  open("name.txt", "wt")  # Text mode write.
+  open("name.txt", "rb")  # Binary mode read
+  open("name.txt", "wb")  # Binary mode write
+  ```
+
+### 9.6.1 Filenames
+
+- Use `os.getcwd()` to get the current working directory.
+- Filenames **can be passed as**:
+  1. **Text string** - Python **encodes** filenames in text string using the encoding returned by `sys.getfilesystemencoding()` **before being passed to the host OS**.
+  2. **Byte string** - To handle the possibility of **miscoded filenames**.
+  3. **Objects** that implements `__fspath__()`.
+  4. Low-level integer **file descriptors** - Open file identifier (file must be opened).
+      - By default, the `<file>.close()` **closes the underlying descriptor**. To disable it - `file = open(fd, "rt", closefd=False)`.
+
+### 9.6.2 File Modes
+
+- **Core** file modes:
+  1. `"r"` for reading.
+  2. `"w"` for writing (**replace** any existing file with **new content**).
+  3. `"a"` for appending (append **new data**, can't modify existing data).
+- **Special** file mode of `"x"`:
+  - Can be used to **write** to file, but only if it **doesn't exist**.
+  - **Use case:** To **prevent accidental overwriting** of existing data.
+  - `FileExistsError` exception is raised **if the file exists**.
+- **Binary files** can be opened for **in-place updates** using `"rb+"` or `"wb+"` **update mode**.
+  - **Use case:** To provide **random read/write access** to file contents in combination with **seek operations**.
+
+### 9.6.3 I/O Buffering
+
+- To **change** the default **behavior** of I/O buffering:
+  ```py
+  # Open a binary-mode file with no I/O buffering.
+  with open("data.bin", "wb", buffering=0) as file:
+      file.write(data)
+  ```
+- `buffering` argument values:
+  Value | Description
+  ------|------------
+  `0` | Only valid for **binary mode files**.
+  `1` | Indicate **line-buffering**.<br />(Only meaningful for **text-mode files**).
+  Other positive values | Indicate the **buffer size** to use (**in bytes**).
+- Use `<file>.flush()` to **write all buffer data to disk**.
+
+### 9.6.4 Text Mode Encoding
+
+- For files opened in text mode, **optional** `encoding` and `errors` (error-handling policy) arguments can be specified.
+  ```py
+  with open("file.txt", "rt", encoding="utf-8", errors="replace") as file:
+      data = file.read()
+  ```
+- **Default text encoding** (may vary by system) is determined by the `sys.getdefaultencoding()`.
+- If the **encoding is known**, it's often better to **specify it explicitly**.
+
+### 9.6.5 Text-Mode Line Handling
+
+- Newline characters vary depending on the host OS.
+- Newlines can be encoded as `"\n"`, `"\r\n"`, or `"\r"`.
+  - **UNIX** - `"\n"`
+  - **Windows** - `"\r\n"`
+- **By default**, Python translates all line endings to standard `"\n"` **when reading**. **On writing**, line endings are **translated back** to the default line ending **used on the system**. (Aka universal newline mode)
+- Specify the **`newline` argument** to `open()` to change the **newline behavior**.
+  ```py
+  # Lines must be ended by the specified newline ("\r\n"). 
+  #   See the open()'s docstring for more details.
+  with open("filename.txt", "rt", newline="\r\n") as file:
+      ...
+  ```
+
+## 9.7 I/O Abstraction Layers
+
+- `open()` serves as a **factory function** for creating instances of different **I/O classes**.
+- I/O classes in the `io` module:
+  1. `FileIO(filename, mode="r", closefd=True, opener=None)` 
+      - Open a file for **raw** *un-buffered binary I/O*.
+  2. `BufferedReader(file [, buffer_size])`<br />`BufferedWriter(file [, buffer_size])`<br />`BufferedRandom(file [, buffer_size])`
+      - *Buffered binary I/O* **layer**.
+      - `file` - A `FileIO` instance.
+  3. `TextIOWrapper(buffered [, encoding [, errors [, newline [, line_buffering [, write_through]]]]])`
+      - *Text mode I/O* **layer**.
+      - `buffered` - A `BufferedReader` or `BufferedWriter` instance.
+      - `line_buffering`: `bool` - Force I/O to be **flushed on newlines**.
+      - `write_through`: `bool` - Force **all writes** to be **flushed**.
+- How a **text-mode file** is constructed, **layer-by-layer**:
+  - **Note:** You **don't need** to manually construct layers, `open()` will take care of it.
+  ```py
+  raw = io.FileIO("filename.txt", "r")  # Raw-binary mode
+  buffer = io.BufferedRead(raw)  # Binary buffered reader
+  file = io.TextIOWrapper(buffer, encoding="utf-8")  # Text mode
+  ```
+- Use `detach()` to strip layers away.
+  ```py
+  # Not using `with` statement because it can't handle detached buffer.
+  f = open("filename.txt", "rt")  # Text-mode file
+  fb = f.detach()                 # Detach underlying binary mode file.
+  data = fb.read()                # Return bytes.
+  ```
+
+### 9.7.1 File Methods
+
+- Methods of file objects:
+  ![9-4-file-methods](images/9-4-file-methods.png)
+  - `readline()` - Remaining line after `n` characters is **not discarded** and will be returned on subsequent read.
+  - `readinto()`
+    - Used to perform zero-copy I/O into contiguous memory buffers.
+    - **Use case:** Used **in combination** with specialized libraries such as `numpy`.
+  - `seek(offset [, whence])` - Used to **randomly access** parts of a file.<br />**`whence` values:**
+    - `os.SEEK_SET` **(default)** - Offset is relative to the **start of the file**.
+    - `os.SEEK_CUR` - Offset is relative to the **current position**.
+    - `os.SEEK_END` - Offset is taken from the **end of the file**.
+- `read()` and `readline()` indicate **end-of-file (EOF)** by returning an **empty string**.
+  ```py
+  # Example 1: Using `if` to detect an EOF condition.
+  with open("filename.txt") as file:
+      while True:
+          line = file.readline()
+          if not line:  # <--
+              break
+          ...
+
+  # Example 2: Using `:=` to detect an EOF condition.
+  with open("filename.txt") as file:
+      while line := file.readline():  # <--
+          ...
+  ```
+- Each open file object keeps a **file pointer** that stores the **byte offset**.
+- **Read-only data attributes** of file objects:
+  ![9-5-file-attributes](images/9-5-file-attributes.png)

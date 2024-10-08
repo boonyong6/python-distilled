@@ -3279,3 +3279,215 @@ enh_gen.close()
 - Each open file object keeps a **file pointer** that stores the **byte offset**.
 - **Read-only data attributes** of file objects:
   ![9-5-file-attributes](images/9-5-file-attributes.png)
+
+## 9.8 Standard Input, Output, and Error
+
+- Three standard **file-like objects**:
+  1. `sys.stdin`
+  2. `sys.stdout`
+  3. `sys.stderr`
+- Use `input([prompt])` to read a line of text from `stdin`.
+  - Don't include the **trailing newline**.
+  ```py
+  name = input("Enter your name: ")
+  ```
+- The values of `sys.stdout`, `sys.stdin`, and `sys.stderr` can be **replaced** with **other file objects**.
+  - **Restore** using the **original values** available in `sys.__stdout__`, `sys.__stdin__`, and `sys.__stderr__`.
+
+## 9.9 Directories
+
+- Use `os.listdir(pathname)` to get a **directory listing**.
+  - If you specify the **path as bytes**, filenames are returned as **undecoded byte strings**.
+  ```py
+  import os
+
+  dir_contents = os.listdir("dirname")
+  ```
+- Use `pathlib` module to match filenames according to a **pattern**, known as **globbing**.
+    - Use `rglob()` to **recursively search all subdirectories** for filenames that match the pattern.
+  ```py
+  import pathlib
+
+  for filename in pathlib.Path(".").glob("*.txt"):
+      print(filename)
+  ```
+
+## 9.10 The `print()` function
+
+```py
+# Example: To redirect the output to a file.
+with open("out.txt", "at") as f:
+    print("The values are", x, y, z, file=f)  # <--
+
+# Example: To change the separator character.
+print("The values are", x, y, z, sep=",")  # "The values are,5,6,7"
+```
+
+## 9.11 Generating Output
+
+- **Generators** can be used to product an **output stream** as **data fragments**.
+  - Provide **flexibility** - It **decouples** the output data from the **actual output stream**, such as file or socket.
+  - This approach can be used to implement a **custom I/O buffering**.
+  - Can result in a significant **reduction in memory use**.
+- [Code examples](chapter09/_9_11_generating_output.py)
+
+## 9.12 Consuming Input
+
+- **Enhanced generators** ([Section 6.5](#65-enhanced-generators-and-yield-expressions)) can be used to **assemble fragmentary input**.
+
+## 9.13 Object Serialization
+
+- ***Pickle*** - A common **Python-specific** data serialization format.
+- **`pickle` module** serializes an object into a **stream of bytes**.
+- `pickle` consists two core operations, **dump** and **load**.
+  ```py
+  import pickle
+
+  # Write an object to a file.
+  obj = SomeObject()
+  with open(filename, "wb") as file:
+      pickle.dump(obj, file)  # <--
+
+  # Restore an object from a file.
+  with open(filename, "rb") as file:
+      obj = pickle.load(file)  # <--
+  ```
+- For **network programming**, it is common to use pickle to create **byte-encoded** messages.
+  ```py
+  # Turn an object into bytes.
+  data = pickle.dumps(obj)
+  
+  # Turn bytes back into an object.
+  obj = pickle.loads(data)
+  ```
+- Certain kinds of objects **can't be pickled**.
+  - Objects that consist of **runtime state**, such as open files, threads, closures, generators, and so on.
+  - A class can define `__getstate__()` and `__setstate__()` to handle these tricky cases.
+    - `__getstate__()` - Return a string, tuple, list, or dictionary value that represent the state of an object.
+    - `__setstate__()` - Receive the value from `__getstate__()` and restore the state of an object from it.
+- `pickle` encodes a **name reference** to the defining class, instead of encoding the underlying source code.
+  - This name is used to perform a **source-code lookup**.
+  - **Recipients** must have the proper **source code already installed**.
+- `pickle` is **insecure** - unpickling **untrusted data** (a known vector for **remote code execution**).
+- **Only use** `pickle` in a completely secure runtime environment.
+
+## 9.14 Blocking Operations and Concurrency
+
+- One **common problem** is to read on **multiple** network sockets (**blocking input stream**) **at the same time**.
+- **Subsections** of 9.14 outlines **approaches** to solving the **blocking problem**.
+
+### 9.14.1 Nonblocking I/O
+
+- To avoid blocking on a **socket**, set its **mode as nonblocking** - `<sock>.setblocking(False)`
+  - If a socket operation would result in blocking, a `BlockingIOError` exception is raised.
+  ```py
+  def reader1(sock):
+      try:
+          data = sock.recv(8192)
+          print("reader1 got:", data)
+      except BlockingIOError:  # <--
+          pass
+
+  def reader2(sock):
+      try:
+          data = sock.recv(8192)
+          print("reader2 got:", data)
+      except BlockingIOError:  # <--
+          pass
+
+  def run(sock1, sock2):
+      sock1.setblocking(False)  # <--
+      sock2.setblocking(False)  # <--
+
+      while True:  # busy loop
+          reader1(sock1)
+          reader2(sock2)
+  ```
+- Relying only on nonblocking I/O is **inefficient** (busy loop).
+
+### 9.14.2 I/O Polling
+
+- **Poll I/O channels** to see if data is available.
+- **`selectors` module** can be used for this purpose.
+  - `selector.select()` **blocks** and waits for I/O.
+  ```py
+  from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
+  
+  def reader1(sock):
+      data = sock.recv(8192)
+      print("reader1 got:", data)
+
+  def reader2(sock):
+      data = sock.recv(8192)
+      print("reader2 got:", data)
+
+  def run(sock1, sock2):
+      selector = DefaultSelector()
+      selector.register(sock1, EVENT_READ, data=reader1)
+      selector.register(sock2, EVENT_READ, data=reader2)
+
+      while True:
+          for key, evt in selector.select():  # Blocks and waits for I/O.
+              func = key.data
+              func(key.fileobj)
+  ```
+- This approach is the **foundation** of many "async" frameworks (inner workings of the **event loop**).
+
+### 9.14.3 Threads
+
+- Use **thread programming** and the `threading` module.
+- A thread represent an **independent task** that runs **inside your program**.
+  ```py
+  import threading
+
+  def reader1(sock):
+      while data := sock.recv(8192):
+          print("reader1 got:", data)
+
+  def reader2(sock):
+      while data := sock.recv(8192):
+          print("reader2 got:", data)
+
+  def run(sock1, sock2):
+      t1 = threading.Thread(target=reader1, args=[sock1])
+      t2 = threading.Thread(target=reader2, args=[sock2])
+
+      # Start the threads.
+      t1.start()
+      t2.start()
+
+      # Wait for the threads to finish.
+      t1.join()
+      t2.join()
+  ```
+
+### 9.14.4 Concurrent Execution with `asyncio`
+
+- Alternative to threads.
+- **Internally**, it's based on an **event loop** that uses **I/O polling**.
+  ```py
+  import asyncio
+
+  async def reader1(sock):
+      evt_loop = asyncio.get_event_loop()
+      while data := await evt_loop.sock_recv(sock, 8192):
+          print("reader1 got:", data)
+
+  async def reader2(sock):
+      evt_loop = asyncio.get_event_loop()
+      while data := await evt_loop.sock_recv(sock, 8192):
+          print("reader2 got:", data)
+
+  async def main(sock1, sock2):
+      evt_loop = asyncio.get_event_loop()
+      t1 = evt_loop.create_task(reader1(sock1))
+      t2 = evt_loop.create_task(reader2(sock2))
+
+      # Wait for the tasks to finish
+      await t1
+      await t2
+
+  ...
+
+  asyncio.run(main(sock1, sock2))
+  ```

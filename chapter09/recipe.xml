@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<recipe>
+    <title>Famous Guacamole</title>
+    <description>A southwest favorite!</description>
+    <ingredients>
+        <item num="4"> Large avocados, chopped </item>
+        <item num="1"> Tomato, chopped </item>
+        <item num="1/2" units="C"> White onion, chopped </item>
+        <item num="2" units="tbl"> Fresh squeezed lemon juice </item>
+        <item num="1"> Jalapeno pepper, diced </item>
+        <item num="1" units="tbl"> Fresh cilantro, minced </item>
+        <item num="1" units="tbl"> Garlic, minced </item>
+        <item num="3" units="tsp"> Salt </item>
+        <item num="12" units="bottles"> Ice-cold beer </item>
+    </ingredients>
+    <directions>
+Combine all ingredients and hand whisk to desired consistency.
+Serve and enjoy with ice-cold beers.
+    </directions>
+</recipe>

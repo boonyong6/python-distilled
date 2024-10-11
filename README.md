@@ -3491,3 +3491,398 @@ print("The values are", x, y, z, sep=",")  # "The values are,5,6,7"
 
   asyncio.run(main(sock1, sock2))
   ```
+
+## 9.15 Standard Library Modules
+
+- Subsections describe commonly used modules **for various I/O related tasks**, including **examples for common programming tasks**.
+
+### 9.15.1 `asyncio` Module
+
+- **Use case:** Code involving **networks** and **distributed systems**.
+- [Code example](chapter09/_9_15_1_asyncio_module.py)
+- Use `nc` or `telnet` to connect to a TCP connection (socket) **for testing**.
+- Most applications typically **operate at a higher level than sockets**. But, you will still have to **interact with the underlying event loop** somehow.
+
+### 9.15.2 `binascii` Module
+
+- Has functions for **converting binary data into various text-based representations** such as hexadecimal and base64.
+  ```py
+  # b2a - binary to ascii
+  # a2b - ascii to binary
+
+  binascii.b2a_hex(b"hello")          # b'68656c6c6f'
+  binascii.a2b_hex(b"68656c6c6f")     # b'hello'
+  binascii.b2a_base64(b"hello")       # b'aGVsbG8=\n'
+  binascii.a2b_base64(b"aGVsbG8=\n")  # b'hello'
+  ```
+- `base64` module and the `bytes` methods have similar functionality.
+  ```py
+  # Example: Using `bytes` methods.
+  a = b"hello"
+  hex_text = a.hex()        # '68656c6c6f'
+  bytes.fromhex(hex_text)   # b'hello'
+  
+  # Example: Using `base64` module.
+  import base64
+  base64.b64encode(a)       # b'aGVsbG8='
+  ```
+
+### 9.15.3 `cgi` Module
+
+- TODO: Require further testing on the cgi capability of a web server.
+
+### 9.15.4 `configparser` Module - INI files
+
+- **INI** files are a **common format** for encoding configuration data in a **human-readable form**.
+- `configparser` module is used to read `.ini` files and extract values.
+  ```py
+  import configparser
+
+  # Create a config parser and read a file.
+  cfg = configparser.ConfigParser()
+  cfg.read("config.ini")
+
+  # Extract values
+  a = cfg.get("section1", "name1")
+  b = cfg.get("section2", "name2")
+  ```
+- More **advanced functionality** - string interpolation, merge multiple `.ini` files, default values, and so on.
+
+### 9.15.5 `csv` Module
+
+- To use this module:
+  1. Open a file.
+  2. Wrap a **CSV encoding/decoding layer** around the file object.
+- `DictReader()` is often used to read CSV data. It interprets the **first line as headers** and returns **each row as dictionary**.
+- **Reasons** of using this module - It can **properly encode/decode** the data and **handles edge cases involving quotation, special characters**, and so on.
+- **Use case:** Write simple scripts **for cleaning or preparing data** to be used with other programs.
+- To perform **data analysis**, consider using a third-party package such as `pandas`.
+
+### 9.15.6 `errno` Module
+
+- Whenever a **system-level error** occurs, it is reported using the **`OSError` exception** or a subclass of it such as `PermissionError`, `FileNotFoundError`, and so on.
+- `OSError` exception carries a **`errno` attribute** (error code) for inspection of various errors.
+- `errno` module provides **symbolic constants** corresponding to these error codes.
+- **Use case:** When writing **specialized exception handlers**.
+  ```py
+  import errno
+
+  def write_data(file, data):
+      try:
+          file.write(data)
+      except OSError as e:
+          if e.errno == errno.ENOSPC:
+              print("You're out of disk space!")
+          else:
+              raise  # Propagate other error.
+  ```
+
+### 9.15.7 `fcntl`Module
+
+- To perform **low-level I/O control operations** on **UNIX** using the `fcntl()` and `ioctl()` system calls.
+- **Use case:** To perform **file locking**. E.g. Open a file with mutual exclusion locking across all processes using `fcntl.flock()`.
+
+### 9.15.8 `hashlib` Module
+
+- Provide functions for **computing cryptographic hash** values such as **MD5**, **SHA-1**, and so on.
+  ```py
+  import hashlib
+
+  hashing = hashlib.new("sha256")
+
+  # Feed data.
+  hashing.update(b"Hello")
+  hashing.update(b"World")
+
+  print(hashing.digest())
+  print(hashing.hexdigest())
+  print(hashing.digest_size)
+  ```
+
+### 9.15.9 `http` Package
+
+- Contain **low-level** implementation of the HTTP.
+- Most of it is considered **legacy** and **too low-level**.
+- You are **more likely to use third-party libraries** such as `requests`, `httpx`, `Django`, `flask`, and so on.
+- Has the ability to run a **simple web server** with limited features.
+  - Can be useful for **testing** and **debugging** programs.
+  ```bash
+  $ python -m http.server
+  ```
+
+### 9.15.10 `io` Module
+
+- Primarily contains **classes** used to implement the **file objects** as returned by the `open()` (**not common** to use those classes directly).
+- Contains **classes** (`StringIO`, `BytesIO`) that are useful for **"faking" a file** in the form of **strings** and **bytes**.
+
+### 9.15.11 `json` Module
+
+- Two functions for converting data, `dumps()` and `loads()`.
+- `dumps()` takes a dictionary and encodes it as a JSON string. `loads()` does the opposite.
+  ```py
+  import json
+
+  data = {"name": "Mary A. Python", "email": "marry123@python.org"}
+  json_string = json.dumps(data)  # Serialize
+  
+  d = json.loads(json_string)     # Deserialize
+  print(d == data)  # True
+  ```
+- Both functions have options for **controlling aspects of the conversion** and **interfacing with class instances**.
+
+### 9.15.12 `logging` Module
+
+- De facto standard module.
+- Can **route output to a log file** and provides many **configuration options** (mostly related to the back-end handling).
+  ```py
+  import logging
+
+  logger = logging.getLogger(__name__)
+
+  # Function that uses logging.
+  def func():
+      # Five levels.
+      logger.debug("A debugging message.")
+      logger.info("An informational message.")
+      logger.warning("A warning message.")
+      logger.error("An error message.")
+      logger.critical("A critical message.")
+
+  # Configuration of logging (occurs once at program startup)
+  if __name__ == "__main__":
+      logging.basicConfig(
+          level=logging.WARNING, 
+          filename="9_15_12_output.log"
+      )
+  ```
+
+### 9.15.13 `os` Module
+
+- Provide a **portable interface** to common **operating system functions**, associated with the process **environment**, **files**, **directories**, **permissions**, and so on.
+- Probably **too low-level** to be directly used in a typical application.
+
+### 9.15.14 `os.path` Module (Legacy)
+
+- **Legacy** module for manipulating path names and performing **common operations on the filesystem**.
+- Most of its functionality has been **replaced by** the **`pathlib` module**. But, you'll still see it used in a lot of code.
+- Solve one fundamental problem - **Portable handling of path separators**, `/` on UNIX and `\` on Windows.
+- Two **commonly used** functions: `os.path.join()` and `os.path.split()`.
+- Has **functions** (`isfile()`, `isdir()`, `getsize()`) for performing **tests on the filesystem** and **getting file metadata**.
+  ```py
+  import os.path
+
+  def compute_usage(filename):
+      if os.path.isfile(filename):          # isfile
+          return os.path.getsize(filename)  # isdir
+      elif os.path.isdir(filename):         # getsize
+          # Nested file lookup via recursion.
+          result = sum(compute_usage(os.path.join(filename, name)) 
+                       for name in os.listdir(filename))
+          return result
+      else:
+          raise RuntimeError("Unsupported file kind.")
+  ```
+
+### 9.15.15 `pathlib` Module (Modern)
+
+- **Modern** way of manipulating path names in a **portable** and **high-level manner**.
+- Combines the **file-oriented functionality** and uses an **object-oriented interface**.
+  ```py
+  # Re-implementation of the `compute_usage()` from the previous section. (simpler, no recursion)
+  def compute_usage(filename):
+      path = Path(filename)
+      if path.is_file():
+          return path.stat().st_size
+      elif path.is_dir():
+          result = sum(path.stat().st_size
+                      for path in path.rglob("*")
+                      if path.is_file())
+          return result
+      else:
+          raise RuntimeError("Unsupported file kind.")
+  ```
+
+### 9.15.16 `re` Module (regex)
+
+- To perform text matching, searching, and replacement operations using **regular expressions**.
+  ```py
+  import re
+
+  text = "Today is 3/27/2018. Tomorrow is 3/28/2018."
+
+  # Find all occurrences of a date.
+  #   Output: ['3/27/2018', '3/28/2018']
+  re.findall(r"\d+/\d+/\d+", text)
+
+  # Replace all occurrences of a date with replacement text.
+  #   Output: "Today is 2018-3-27. Tomorrow is 2018-3-28."
+  re.sub(r"(\d+)/(\d+)/(\d+)", r"\3-\1-\2", text)
+  ```
+
+### 9.15.17 `shutil` Module
+
+- To perform common **shell tasks**.
+- It is **portable**.
+
+### 9.15.18 `select` Module - I/O Polling
+
+- Used for simple **polling of multiple I/O streams**.
+- **Watch** multiple **file descriptors** for **incoming data** or **receive outgoing data**.
+- Only support **socket** on Windows.
+- `select()` is a **standard low-level system call** used to watch for **system events** and to implement **async I/O frameworks** such as `asyncio` module.
+- `selectors` module provides a high-level interface. See [Section 9.14.2](#9142-io-polling)
+
+### 9.15.19 `smtplib` Module
+
+- To create **SMTP client** for sending emails.
+- Contain features to handle **passwords**, **authentication**, and so on.
+
+### 9.15.20 `socket` Module
+
+- Provide **low-level** access to **network programming** functions.
+- [Code examples](chapter09/_9_15_20_socket_module.py)
+
+### 9.15.22 `subprocess` Module
+
+- To **execute a separate program** as a subprocess with control over the execution environment including **I/O handling**, **termination**, and so on.
+- Two **use cases**:
+  1. Use `check_output()` to **collect output** from a separate program.
+      ```py
+      import subprocess
+
+      # Run a program (command) and collect its output.
+      try:
+          out = subprocess.check_output(["ls", "-l"])
+          # Apply a proper decoding to convert bytes to text.
+          print(out.decode("utf-8"))
+      except subprocess.CalledProcessError as e:
+          print("It failed:", e)
+      ```
+  2. Use `Popen` class to set up a **pipe** and interact with a subprocess.
+      - `stdin` and `stdout` **attributes of `Popen` instances** can be used to communicate with the subprocess.
+      ```py
+      import subprocess
+      
+      p = subprocess.Popen(["wc"], 
+                           stdin=subprocess.PIPE, 
+                           stdout=subprocess.PIPE)
+
+      # Send data to the subprocess.
+      p.stdin.write(b"hello world\nthis is a test\n")
+      p.stdin.close()
+
+      # Read data back.
+      out = p.stdout.read()
+      print(out)
+      ```
+
+### 9.15.23 `tempfile` Module
+
+- For creating temporary files and directories.
+  ```py
+  import tempfile
+
+  with tempfile.TemporaryFile() as temp_file:
+      print(f"Temp file location: {temp_file.name}")
+      
+      temp_file.write(b"Hello World")
+      temp_file.seek(0)
+      data = temp_file.read()
+      print("Got:", data)
+
+  with tempfile.TemporaryDirectory() as temp_dir:
+      print(f"Temp dir location: {temp_dir}")
+  ```
+- **By default**, temporary files are open in **binary mode** and allow both **reading and writing**.
+
+### 9.15.24 `textwrap` Module
+
+- To format text to fit a specific **terminal width**.
+- Sometimes used in **cleaning up text for output** when making reports.
+- Two main functions: `wrap()` and `indent()`.
+
+### 9.15.25 `threading` Module
+
+- To execute code **concurrently**.
+- Commonly used for **I/O handling** in network programs.
+- [Code examples](chapter09/_9_15_25_threading_module.py) include:
+  1. Run a task using a thread.
+  2. Use a **flag** or variable to **control the thread termination**.
+  2. Use `threading.Lock()` to **protect shared data from inconsistent mutations** by multiple threads concurrently.
+  4. Use `threading.Event()` to make one thread **wait for another thread**.
+  5. Use `queue.Queue` as a medium to **communicate between threads**.
+
+### 9.15.26 `time` Module
+
+- To access **system time**-related functions.
+- Commonly used functions:
+  Function | Description
+  ---------|------------
+  `sleep(seconds)` | Sleep for a number of seconds.
+  `time()` | Return the **current system time in UTC as float** (Some systems provide **fractions of a second**).<br />Aka. **Unix Timestamp**
+  `localtime([seconds])` | Return a **`struct_time` object** representing the **local time**.
+  `gmtime([seconds])` | Return a **`struct_time` object** representing the **time in UTC**.
+  `ctime([seconds])` | Convert a **time in seconds** to a **text** suitable for printing. Useful for **debugging** and **logging**.
+  `asctime([struct_time])` | Same as `ctime()`, but accept **different argument type**.
+- **`datetime` module** is **more generally used** for representing dates and times and performing **date-related computations** and dealing with **timezones**.
+
+### 9.15.27 `urllib` Package
+
+- To make client-side HTTP requests.
+- Use `urllib.request.urlopen()` to **fetch simple webpages**. (the most useful function in this package)
+  - Works fine for **basic** webpages and APIs (HTTP).
+  - But, it's **not suitable** for use **if access involve cookies, advanced authentication schemes**, and so on. Use a **third-party library** such as `requests` or `httpx` instead.
+  ```py
+  from urllib.request import urlopen
+
+  u = urlopen("http://www.python.org")
+  data = u.read()
+  ```
+- Use `urllib.parse.urlencode()` to **encode form parameters** into a **query string**.
+- `urllib.parse` has functions for manipulating URLs, such as:
+  - Use `urlparse()` to parse a URL into components (`ParseResult`).
+
+### 9.15.28 `unicodedata` Module
+
+- Used for **more advanced** operations involving Unicode strings.
+- A Unicode text can have **multiple representations**. E.g. `ñ` can be represent as a **single character** `U+00F1` or a **multi-character sequence** of `U+006e U+0303` (n, ~).
+  ```py
+  d = {}
+  d["Jalape\xf1o"] = "spicy"
+  d["Jalapen\u0303o"] = "mild"
+  print(d)  # {'Jalapeño': 'spicy', 'Jalapeño': 'mild'}
+  ```
+- Use `unicodedata.normalize()` to **normalize** Unicode strings for **consistent processing**. Two normalization forms:
+  1. `NFC` - Make sure that all characters in a string are **fully composed**.
+  2. `NFD` - Make sure that all characters in a string are **fully decomposed**.
+- Has functions for **testing character properties** such as **capitalization**, **numbers**, and **whitespace**.
+  - Use `unicodedata.category(<char>)` to get the **general character properties**. More details in [official Unicode character database](https://www.unicode.org/reports/tr44/#General_Category_Values).
+
+### 9.15.29 `xml` Package
+
+- A **large** collection of modules.
+- Use **`xml.etree` subpackage** if your primary goal is to **read** an XML document and **extract** information.
+- To **extract specific elements** from an XML:
+  ```py
+  from xml.etree.ElementTree import ElementTree
+
+  doc = ElementTree(file="recipe.xml")
+  title_elt = doc.find("title")  # <--
+  print(title_elt.text)
+
+  # Alternative (just get element text).
+  print(doc.findtext("description"))  # <--
+
+  # Iterate over multiple elements.
+  for item in doc.findall("ingredients/item"):  # <--
+      num = item.get("num")
+      units = item.get("units", "")
+      text = (item.text or "").strip()
+      print(f"{num}, {units}, {text}")
+  ```
+
+### 9.16 Final Words
+
+- It's common to encounter issues related to **data encoding**, especially for **textual data** and **Unicode**.
+- Python has **two distinct I/O evaluation models**, **synchronous** and **asynchronous**.
+  - You should probably **avoid asynchronous coding** unless you **absolutely know that you need it**.

@@ -56,7 +56,7 @@
 
 ## 1.4 Arithmetic Operators
 
-- Noteworthy operators:
+- Notable operators:
   Operation | Description
   ----------|------------
   `x / y` | Produce a float when applied to int.<br />E.g. `4 / 2` -> `2.0`
@@ -1998,7 +1998,7 @@ enh_gen.close()
 
 - Most of the built-in types are implemented in C.
 - E.g. `dict.update()` directly manipulates the data **without ever** routing through the redefined `__setitem__()`.
-- `collections` module has special classes `UserDict`, `UserList`, and `UserString` that can be used to make safe subclasses.
+- `collections` module has **special classes** `UserDict`, `UserList`, and `UserString` that can be used to make **safe subclasses**.
 
 ## 7.12 Class Variables and Methods
 
@@ -3492,7 +3492,7 @@ print("The values are", x, y, z, sep=",")  # "The values are,5,6,7"
   asyncio.run(main(sock1, sock2))
   ```
 
-## 9.15 Standard Library Modules
+## 9.15 Standard Library Modules (I/O Related)
 
 - Subsections describe commonly used modules **for various I/O related tasks**, including **examples for common programming tasks**.
 
@@ -3881,8 +3881,22 @@ print("The values are", x, y, z, sep=",")  # "The values are,5,6,7"
       print(f"{num}, {units}, {text}")
   ```
 
-### 9.16 Final Words
+## 9.16 Final Words
 
 - It's common to encounter issues related to **data encoding**, especially for **textual data** and **Unicode**.
 - Python has **two distinct I/O evaluation models**, **synchronous** and **asynchronous**.
   - You should probably **avoid asynchronous coding** unless you **absolutely know that you need it**.
+
+# 10 Built-in Functions and Standard Library
+
+## 10.3 Standard Library Modules (General)
+
+- Official reference - https://docs.python.org/library
+- Notable modules:
+  Module | Description
+  -------|------------
+  `collections` | Provide **additional container objects** such as:<br /> - `deque` - Double-ended queue<br />- `defaultdict` - Dictionaries that automatically initialize missing items<br />- `Counter` - Counters for tabulation
+  `itertools` | Provide **iteration patterns** such as:<br />- **Chaining** iterables together<br />- Iterating over **product sets**, **permutations**, **grouping**, and so on.
+  `statistics` | Provide functions for computing statistical values such as **means**, **medians**, and **standard deviation**.
+  `sys` | Provide attributes and functions related to the **runtime environment** such as:<br />- `sys.argv` - Command-line options ([Section 9.4](#94-reading-command-line-options))<br />- `sys.stdin`, ... - Standard I/O streams ([Section 9.8](#98-standard-input-output-and-error))<br />- `sys.path` Import path ([Section 8.7](#87-the-module-search-path---syspath))
+  `unittest` | Provide support for writing unit tests. But, **many prefer using third-party libraries** such as `pytest`.
